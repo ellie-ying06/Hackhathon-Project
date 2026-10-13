@@ -19,7 +19,7 @@ app.mount(
 # Serve the homepage from frontend/pages/index.html
 @app.get("/")
 def home():
-    return FileResponse(FRONTEND_DIR / "pages" / "index.html")
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 
 # Backend health check

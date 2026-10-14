@@ -21,6 +21,11 @@ app.mount(
 def home():
     return FileResponse(FRONTEND_DIR / "index.html")
 
+# Serve the help page from frontend/pages/help.html
+@app.get("/help")
+def help_page():
+    return FileResponse(FRONTEND_DIR / "help.html")
+
 
 # Backend health check
 @app.get("/api/health")

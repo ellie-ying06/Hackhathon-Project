@@ -24,7 +24,7 @@ def home():
 # Serve the help page from frontend/pages/help.html
 @app.get("/help")
 def help_page():
-    return FileResponse(FRONTEND_DIR / "help.html")
+    return FileResponse(FRONTEND_DIR / "/pages/help.html")
 
 
 # Backend health check

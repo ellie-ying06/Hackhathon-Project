@@ -143,34 +143,40 @@ function filterProducts() {
 // NEIGHBOUR HELP & THREADS
 // =========================
 // 1. Force-initialize sample posts immediately if localStorage is empty
-if (!localStorage.getItem("community_posts")) {
+const STORAGE_KEY = "community_posts_v2";
+
+// Ensure sample posts exist immediately
+if (!localStorage.getItem(STORAGE_KEY)) {
     const samplePosts = [
         {
             id: 1,
             title: "Need help carrying a heavy couch to the 2nd floor",
-            username: "Sarah_Lee",
-            content: "Hi neighbours! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
-            date: "Oct 14, 2026"
+            username: "Sarah_M",
+            content: "Hi neighbors! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
+            date: "Oct 14, 2026",
+            comments: [
+                { username: "Renu", text: "I'm free Saturday morning! Happy to help carry it.", date: "Oct 14, 2026" },
+                { username: "Liam", text: "Count me in too if you need a second pair of hands.", date: "Oct 15, 2026" }
+            ]
         },
         {
             id: 2,
             title: "!Need Help Taking care of 2 pet cats next Friday to Tuesday",
             username: "Alisha",
             content: "Can anyone help to take care of my two pet cats as I'm going on a vacation next Friday? Feel free to message me if you need to borrow it for your yard.",
-            date: "Oct 13, 2026"
+            date: "Oct 13, 2026",
+            comments: [
+            ]
         }
     ];
-    localStorage.setItem("community_posts", JSON.stringify(samplePosts));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(samplePosts));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 2. Render Thread Feed on Help Page
-    const threadListEl = document.getElementById("threadList");
-    if (threadListEl) {
-        renderThreads();
-    }
+    // 1. Always try to render threads if the feed list exists
+    renderThreads();
 
-    // 3. Handle New Post Submission (Form)
+    // 2. Handle New Post Submission
     const postForm = document.getElementById("postForm");
     if (postForm) {
         postForm.addEventListener("submit", (e) => {
@@ -185,49 +191,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const posts = JSON.parse(localStorage.getItem("community_posts")) || [];
+            const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
             const newPost = {
                 id: Date.now(),
                 title: title,
                 username: username,
                 content: content,
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                comments: []
             };
 
             posts.unshift(newPost);
-            localStorage.setItem("community_posts", JSON.stringify(posts));
-
-            // Redirect back to help page feed
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
             window.location.href = "/static/pages/help.html";
         });
     }
 
-    // 4. Render Thread Detail View on post-detail.html
+    // 3. Render Thread Detail View & Comments on post-detail.html
     const detailContainer = document.getElementById("threadDetailContainer");
     if (detailContainer) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const postId = urlParams.get("id");
-        const posts = JSON.parse(localStorage.getItem("community_posts")) || [];
-        const post = posts.find(p => Number(p.id) === Number(postId));
-
-        if (post) {
-            detailContainer.innerHTML = `
-                <a href="/static/pages/help.html" class="back-link">← Back to Neighbour Help Feed</a>
-                <div class="detail-card">
-                    <h2 class="detail-title">${escapeHTML(post.title)}</h2>
-                    <div class="detail-meta">Posted by <strong>@${escapeHTML(post.username)}</strong> on ${post.date}</div>
-                    <div class="detail-body">${escapeHTML(post.content)}</div>
-                </div>
-            `;
-        } else {
-            detailContainer.innerHTML = `
-                <a href="/static/pages/help.html" class="back-link">← Back to Feed</a>
-                <div class="empty-state">
-                    <h3>Post Not Found</h3>
-                    <p>This Post may have been Removed or Does not exist.</p>
-                </div>
-            `;
-        }
+        renderPostDetail();
     }
 });
 
@@ -235,7 +218,7 @@ function renderThreads() {
     const threadListEl = document.getElementById("threadList");
     if (!threadListEl) return;
 
-    const posts = JSON.parse(localStorage.getItem("community_posts")) || [];
+    const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
     if (posts.length === 0) {
         threadListEl.innerHTML = `
@@ -252,10 +235,91 @@ function renderThreads() {
             <h3 class="thread-title">${escapeHTML(post.title)}</h3>
             <div class="thread-meta">
                 <span>👤 @${escapeHTML(post.username)}</span>
+                <span>💬 ${post.comments ? post.comments.length : 0} Replies</span>
                 <span> ${post.date}</span>
             </div>
         </a>
     `).join("");
+}
+
+function renderPostDetail() {
+    const detailContainer = document.getElementById("threadDetailContainer");
+    if (!detailContainer) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = Number(urlParams.get("id"));
+    const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const post = posts.find(p => Number(p.id) === postId);
+
+    if (!post) {
+        detailContainer.innerHTML = `
+            <a href="/static/pages/help.html" class="back-link">← Back to Feed</a>
+            <div class="empty-state">
+                <h3>Post not found</h3>
+                <p>This post may have been removed or does not exist.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const commentsHTML = post.comments && post.comments.length > 0 
+        ? post.comments.map(c => `
+            <div class="comment-card" style="background: #f4f7f5; padding: 12px 16px; border-radius: 8px; margin-bottom: 10px;">
+                <div style="font-size: 0.9rem; color: #174d40; margin-bottom: 4px;"><strong>@${escapeHTML(c.username)}</strong> <span style="color: #777; font-size: 0.8rem;">• ${c.date}</span></div>
+                <div style="color: #333; font-size: 0.95rem;">${escapeHTML(c.text)}</div>
+            </div>
+          `).join("")
+        : `<p style="color: #66786e; font-style: italic;">No comments yet. Be the first to Lend a Hand!</p>`;
+
+    detailContainer.innerHTML = `
+        <a href="/static/pages/help.html" class="back-link">← Back to Neighbour Help Feed</a>
+        
+        <div class="detail-card" style="margin-bottom: 30px;">
+            <h2 class="detail-title">${escapeHTML(post.title)}</h2>
+            <div class="detail-meta">Posted by <strong>@${escapeHTML(post.username)}</strong> on ${post.date}</div>
+            <div class="detail-body" style="margin-top: 15px; line-height: 1.6;">${escapeHTML(post.content)}</div>
+        </div>
+
+        <div class="comments-section">
+            <h3 style="color: #174d40; margin-bottom: 15px;">Community Replies (${post.comments ? post.comments.length : 0})</h3>
+            <div id="commentsList" style="margin-bottom: 25px;">
+                ${commentsHTML}
+            </div>
+
+            <div class="form-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h4 style="margin-top: 0; color: #174d40;">Leave a Reply</h4>
+                <form id="commentForm">
+                    <div style="margin-bottom: 12px;">
+                        <label for="commentText" style="display: block; margin-bottom: 5px; font-weight: 500;">Your Message</label>
+                        <textarea id="commentText" rows="3" placeholder="..." required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Post Reply</button>
+                </form>
+            </div>
+        </div>
+    `;
+
+    const commentForm = document.getElementById("commentForm");
+    if (commentForm) {
+        commentForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const cUser = document.getElementById("commentUser").value.trim();
+            const cText = document.getElementById("commentText").value.trim();
+
+            if (!cUser || !cText) return;
+
+            const newComment = {
+                username: cUser,
+                text: cText,
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            };
+
+            post.comments.push(newComment);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+
+            renderPostDetail();
+        });
+    }
 }
 
 function escapeHTML(str) {
@@ -263,4 +327,3 @@ function escapeHTML(str) {
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
 }
-

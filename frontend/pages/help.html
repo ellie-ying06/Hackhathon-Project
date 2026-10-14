@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CommunityConnect | Create Post</title>
+    <title>CommunityConnect | Neighbour Help</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -20,31 +20,23 @@
         </nav>
     </header>
 
-    <!-- CREATE POST PAGE -->
+    <!-- MAIN THREAD FEED -->
     <main class="container">
-        <a href="/" class="back-link">← Back to Feed</a>
         
-        <div class="form-card">
-            <h2 style="margin-top: 0; color: #174d40;">Create a Neighbour Request</h2>
-            <form id="postForm">
-                <div>
-                    <label for="usernameInput">Your Name / Username</label>
-                    <input type="text" id="usernameInput" placeholder="e.g. Alex_W" required>
-                </div>
-
-                <div>
-                    <label for="titleInput">Post Title</label>
-                    <input type="text" id="titleInput" placeholder="e.g. Looking for a ladder to clean gutters" required>
-                </div>
-
-                <div>
-                    <label for="contentInput">Description / Details</label>
-                    <textarea id="contentInput" rows="6" placeholder="Describe what you need help with or what you are offering..." required></textarea>
-                </div>
-
-                <button type="submit" class="btn">Publish Post</button>
-            </form>
+        <div class="feed-header">
+            <div>
+                <h1>Neighbour Help</h1>
+                <p style="color: #66786e; margin: 5px 0 0 0;">Ask for assistance or offer a hand to your community.</p>
+            </div>
+            <a href="/static/pages/create-post.html" class="btn">+ Create Post</a>
         </div>
+
+        <section class="posts-section">
+            <div id="threadList" class="thread-list">
+                <!-- Threads dynamically inserted here -->
+            </div>
+        </section>
+
     </main>
 
     <!-- FOOTER -->

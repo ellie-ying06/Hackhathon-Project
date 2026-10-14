@@ -142,57 +142,41 @@ function filterProducts() {
 // =========================
 // NEIGHBOUR HELP & THREADS
 // =========================
+// 1. Force-initialize sample posts immediately if localStorage is empty
+if (!localStorage.getItem("community_posts")) {
+    const samplePosts = [
+        {
+            id: 1,
+            title: "Need help carrying a heavy couch to the 2nd floor",
+            username: "Sarah_Lee",
+            content: "Hi neighbours! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
+            date: "Oct 14, 2026"
+        },
+        {
+            id: 2,
+            title: "!Need Help Taking care of 2 pet cats next Friday to Tuesday",
+            username: "Alisha",
+            content: "Can anyone help to take care of my two pet cats as I'm going on a vacation next Friday? Feel free to message me if you need to borrow it for your yard.",
+            date: "Oct 13, 2026"
+        }
+    ];
+    localStorage.setItem("community_posts", JSON.stringify(samplePosts));
+}
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Initial sample neighbour help posts if localStorage is empty
-    if (!localStorage.getItem("community_posts")) {
-        const samplePosts = [
-            {
-                id: 1,
-                title: "Need help carrying a heavy couch to the 2nd floor",
-                username: "Sarah_M",
-                content: "Hi neighbors! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
-                date: "Oct 14, 2026"
-            },
-            {
-                id: 2,
-                title: "Lawnmower available to borrow this weekend",
-                username: "Dave_Green",
-                content: "Hey everyone, I have an electric lawnmower that I'm not using this weekend. Feel free to message me if you need to borrow it for your yard.",
-                date: "Oct 13, 2026"
-            }
-        ];
-        localStorage.setItem("community_posts", JSON.stringify(samplePosts));
-    }
-
-    // 1. Render Thread Feed on Help / Index Page
+    // 2. Render Thread Feed on Help Page
     const threadListEl = document.getElementById("threadList");
     if (threadListEl) {
         renderThreads();
     }
 
-    // 2. Authentication & Create Post Protection
-    const usernameInput = document.getElementById("usernameInput");
-    const currentUser = localStorage.getItem("current_user");
-
-    if (window.location.pathname.includes("create-post.html") || window.location.pathname.includes("helpPost_Creation.html")) {
-        if (!currentUser) {
-            alert("You must be registered and logged in to create a post.");
-            window.location.href = "/static/pages/register.html";
-            return;
-        }
-        if (usernameInput) {
-            usernameInput.value = currentUser;
-            usernameInput.readOnly = true;
-        }
-    }
-
-    // 3. Handle New Post Submission
+    // 3. Handle New Post Submission (Form)
     const postForm = document.getElementById("postForm");
     if (postForm) {
         postForm.addEventListener("submit", (e) => {
             e.preventDefault();
-            const username = currentUser || (usernameInput ? usernameInput.value.trim() : "Anonymous");
+            const usernameInput = document.getElementById("usernameInput");
+            const username = usernameInput ? usernameInput.value.trim() : "Anonymous";
             const title = document.getElementById("titleInput").value.trim();
             const content = document.getElementById("contentInput").value.trim();
 
@@ -239,8 +223,8 @@ document.addEventListener("DOMContentLoaded", () => {
             detailContainer.innerHTML = `
                 <a href="/static/pages/help.html" class="back-link">← Back to Feed</a>
                 <div class="empty-state">
-                    <h3>Post not found</h3>
-                    <p>This post may have been removed or does not exist.</p>
+                    <h3>Post Not Found</h3>
+                    <p>This Post may have been Removed or Does not exist.</p>
                 </div>
             `;
         }
@@ -257,7 +241,7 @@ function renderThreads() {
         threadListEl.innerHTML = `
             <div class="empty-state">
                 <h3>No requests or posts yet</h3>
-                <p>Be the first neighbor to reach out for help or share an offer!</p>
+                <p>Be the First Neighbour to reach out for Help or Share an Offer!</p>
             </div>
         `;
         return;
@@ -268,7 +252,7 @@ function renderThreads() {
             <h3 class="thread-title">${escapeHTML(post.title)}</h3>
             <div class="thread-meta">
                 <span>👤 @${escapeHTML(post.username)}</span>
-                <span>🕒 ${post.date}</span>
+                <span> ${post.date}</span>
             </div>
         </a>
     `).join("");
@@ -280,18 +264,3 @@ function escapeHTML(str) {
     );
 }
 
-// =========================
-// HELP POST CREATION
-// =========================
-
-if (window.location.pathname.includes("helpPost_Creation.html")) {
-    if (!currentUser) {
-        alert("You must be registered and logged in to create a post.");
-        window.location.href = "/static/pages/register.html";
-        return;
-    }
-    if (usernameInput) {
-        usernameInput.value = currentUser;
-        usernameInput.readOnly = true;
-    }
-}

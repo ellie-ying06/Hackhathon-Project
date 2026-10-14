@@ -21,10 +21,14 @@ app.mount(
 def home():
     return FileResponse(FRONTEND_DIR / "index.html")
 
+@app.get("/market")
+def marketplace():
+    return FileResponse(FRONTEND_DIR / "pages" / "market.html")
+
 # Serve the help page from frontend/pages/help.html
 @app.get("/help")
 def help_page():
-    return FileResponse(FRONTEND_DIR / "/pages/help.html")
+    return FileResponse(FRONTEND_DIR / "pages" / "help.html")
 
 
 # Backend health check

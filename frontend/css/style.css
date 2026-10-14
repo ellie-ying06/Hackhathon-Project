@@ -260,3 +260,196 @@ footer {
 }
 
 
+/* =========================
+   MARKETPLACE
+========================= */
+
+.marketplace-page {
+    max-width: 1200px;
+    margin: 45px auto;
+}
+
+.marketplace-title {
+    text-align: center;
+    font-size: 36px;
+    margin-bottom: 8px;
+    color: #174d40;
+}
+
+.marketplace-subtitle {
+    text-align: center;
+    color: #66786e;
+    margin-bottom: 30px;
+}
+
+
+/* =========================
+   SEARCH BAR
+========================= */
+
+.marketplace-search {
+    max-width: 700px;
+    margin: 0 auto 25px;
+}
+
+.marketplace-search input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 1px solid #cbd8d0;
+    border-radius: 30px;
+    font-size: 16px;
+    outline: none;
+    background: white;
+}
+
+.marketplace-search input:focus {
+    border-color: #23815f;
+    box-shadow: 0 0 0 3px rgba(35, 129, 95, 0.12);
+}
+
+
+/* =========================
+   CATEGORY BUTTONS
+========================= */
+
+.marketplace-categories {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 35px;
+}
+
+.category-btn {
+    padding: 10px 22px;
+    border: 1px solid #cbd8d0;
+    border-radius: 30px;
+    background: white;
+    color: #263b32;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.category-btn:hover {
+    background: #dceee2;
+    border-color: #23815f;
+}
+
+.category-btn.active {
+    background: #23815f;
+    color: white;
+    border-color: #23815f;
+}
+
+
+/* =========================
+   PRODUCT GRID
+========================= */
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+}
+
+
+/* =========================
+   PRODUCT CARD
+========================= */
+
+.product-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.product-info {
+    padding: 18px;
+}
+
+.product-name {
+    margin: 0 0 8px;
+    font-size: 18px;
+    color: #263b32;
+}
+
+.product-price {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #23815f;
+}
+
+.product-condition {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 15px;
+    background: #dceee2;
+    color: #174d40;
+    font-size: 12px;
+}
+
+.product-location {
+    margin-top: 10px;
+    color: #66786e;
+    font-size: 13px;
+}
+
+
+/* =========================
+   NO RESULTS
+========================= */
+
+.no-products {
+    text-align: center;
+    padding: 50px 20px;
+    color: #66786e;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+
+    .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .marketplace-title {
+        font-size: 28px;
+    }
+
+}
+
+@media (max-width: 450px) {
+
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+
+}

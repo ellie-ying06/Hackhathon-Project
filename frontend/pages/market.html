@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CommunityConnect | Marketplace</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <!-- =========================
+         NAVIGATION BAR
+    ========================== -->
+    <header class="navbar">
+
+        <a class="logo" href="/">
+            CommunityConnect
+        </a>
+
+        <nav>
+            <a href="/">Home</a>
+            <a href="/static/pages/community.html">Events</a>
+            <a href="/static/pages/register.html">Register</a>
+            <a href="/static/pages/market.html" class="active">
+                Marketplace
+            </a>
+            <a href="/static/pages/help.html">
+                Neighbour Help
+            </a>
+        </nav>
+
+    </header>
+
+
+    <!-- =========================
+         MARKETPLACE
+    ========================== -->
+
+    <main class="container marketplace-page">
+
+        <h1 class="marketplace-title">
+            Community Marketplace
+        </h1>
+
+        <p class="marketplace-subtitle">
+            Give unused items a second life within your community.
+        </p>
+
+
+        <!-- SEARCH BAR -->
+
+        <div class="marketplace-search">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="🔍 Search for items..."
+            >
+
+        </div>
+
+
+        <!-- CATEGORIES -->
+
+        <div class="marketplace-categories">
+
+            <button
+                class="category-btn active"
+                data-category="All">
+                All
+            </button>
+
+            <button
+                class="category-btn"
+                data-category="Furniture">
+                Furniture
+            </button>
+
+            <button
+                class="category-btn"
+                data-category="Books">
+                Books
+            </button>
+
+            <button
+                class="category-btn"
+                data-category="Clothing">
+                Clothing
+            </button>
+
+            <button
+                class="category-btn"
+                data-category="Electronics">
+                Electronics
+            </button>
+
+            <button
+                class="category-btn"
+                data-category="Others">
+                Others
+            </button>
+
+        </div>
+
+
+        <!-- PRODUCTS -->
+
+        <section class="marketplace-products">
+
+            <div id="productGrid" class="product-grid">
+
+                <!-- Products will be inserted here by JavaScript -->
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <p>
+            CommunityConnect © 2026 | FiveNova
+        </p>
+
+    </footer>
+
+
+    <script src="/static/js/script.js"></script>
+
+</body>
+</html>

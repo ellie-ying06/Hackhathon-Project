@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Prevent GitHub database conflict
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

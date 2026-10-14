@@ -126,3 +126,68 @@ def get_posts():
 
     finally:
         conn.close()
+
+# Get one community post by ID
+@router.get("/posts/{post_id}")
+def get_post(post_id: int):
+    conn = get_connection()
+
+    try:
+        row = conn.execute(
+            """
+            SELECT
+                p.post_id,
+                p.member_id,
+                p.title,
+                p.content,
+                p.category,
+                datetime(p.created_at, '+8 hours') AS created_at,
+                r.full_name AS author
+            FROM post_content p
+            JOIN resident_member r
+                ON p.member_id = r.member_id
+            WHERE p.post_id = ?
+            """,
+            (post_id,)
+        ).fetchone()
+
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Post not found"
+            )
+
+        return dict(row)
+
+    finally:
+        conn.close()
+
+# Delete a community post by ID
+@router.delete("/posts/{post_id}")
+def delete_post(post_id: int):
+    conn = get_connection()
+
+    try:
+        cursor = conn.execute(
+            """
+            DELETE FROM post_content
+            WHERE post_id = ?
+            """,
+            (post_id,)
+        )
+
+        if cursor.rowcount == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="Post not found"
+            )
+
+        conn.commit()
+
+        return {
+            "message": "Post deleted successfully",
+            "post_id": post_id
+        }
+
+    finally:
+        conn.close()

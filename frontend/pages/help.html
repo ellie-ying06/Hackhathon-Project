@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CommunityConnect | Home</title>
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/frontend/css/style.css">
 </head>
 <body>
 
@@ -96,3 +96,60 @@
 </body>
 </html>
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CommunityConnect | Create Post</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <header class="navbar">
+        <a class="logo" href="/">CommunityConnect</a>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/static/pages/community.html">Events</a>
+            <a href="/static/pages/register.html">Register</a>
+            <a href="/static/pages/market.html">Marketplace</a>
+            <a href="/" class="active">Neighbour Help</a>
+        </nav>
+    </header>
+
+    <!-- CREATE POST PAGE -->
+    <main class="container">
+        <a href="/" class="back-link">← Back to Feed</a>
+        
+        <div class="form-card">
+            <h2 style="margin-top: 0; color: #174d40;">Create a Neighbour Request</h2>
+            <form id="postForm">
+                <div>
+                    <label for="usernameInput">Your Name / Username</label>
+                    <input type="text" id="usernameInput" placeholder="e.g. Alex_W" required>
+                </div>
+
+                <div>
+                    <label for="titleInput">Post Title</label>
+                    <input type="text" id="titleInput" placeholder="e.g. Looking for a ladder to clean gutters" required>
+                </div>
+
+                <div>
+                    <label for="contentInput">Description / Details</label>
+                    <textarea id="contentInput" rows="6" placeholder="Describe what you need help with or what you are offering..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn">Publish Post</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>CommunityConnect © 2026 | FiveNova</p>
+    </footer>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

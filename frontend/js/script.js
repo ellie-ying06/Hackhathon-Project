@@ -165,23 +165,22 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("community_posts", JSON.stringify(samplePosts));
     }
 
-    // 1. Render Thread Feed on Index Page
+    // 1. Render Thread Feed on Help / Index Page
     const threadListEl = document.getElementById("threadList");
     if (threadListEl) {
         renderThreads();
     }
 
-    // 2. Authentication & Create Post Protection (Only registered users allowed)
+    // 2. Authentication & Create Post Protection
     const usernameInput = document.getElementById("usernameInput");
-    const currentUser = localStorage.getItem("current_user"); // Set upon successful registration/login
+    const currentUser = localStorage.getItem("current_user");
 
-    if (window.location.pathname.includes("create-post.html")) {
+    if (window.location.pathname.includes("create-post.html") || window.location.pathname.includes("helpPost_Creation.html")) {
         if (!currentUser) {
             alert("You must be registered and logged in to create a post.");
             window.location.href = "/static/pages/register.html";
             return;
         }
-        // Automatically set the logged-in username and make it readonly
         if (usernameInput) {
             usernameInput.value = currentUser;
             usernameInput.readOnly = true;
@@ -211,25 +210,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
             };
 
-            posts.unshift(newPost); // Add to beginning of array
+            posts.unshift(newPost);
             localStorage.setItem("community_posts", JSON.stringify(posts));
 
-            // Redirect back to main feed
-            window.location.href = "/";
+            // Redirect back to help page feed
+            window.location.href = "/static/pages/help.html";
         });
     }
 
-    // 4. Render Thread Detail View
+    // 4. Render Thread Detail View on post-detail.html
     const detailContainer = document.getElementById("threadDetailContainer");
     if (detailContainer) {
         const urlParams = new URLSearchParams(window.location.search);
         const postId = urlParams.get("id");
         const posts = JSON.parse(localStorage.getItem("community_posts")) || [];
-        const post = posts.find(p => p.id == postId);
+        const post = posts.find(p => Number(p.id) === Number(postId));
 
         if (post) {
             detailContainer.innerHTML = `
-                <a href="/" class="back-link">← Back to Neighbour Help Feed</a>
+                <a href="/static/pages/help.html" class="back-link">← Back to Neighbour Help Feed</a>
                 <div class="detail-card">
                     <h2 class="detail-title">${escapeHTML(post.title)}</h2>
                     <div class="detail-meta">Posted by <strong>@${escapeHTML(post.username)}</strong> on ${post.date}</div>
@@ -238,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
         } else {
             detailContainer.innerHTML = `
-                <a href="/" class="back-link">← Back to Feed</a>
+                <a href="/static/pages/help.html" class="back-link">← Back to Feed</a>
                 <div class="empty-state">
                     <h3>Post not found</h3>
                     <p>This post may have been removed or does not exist.</p>
@@ -250,6 +249,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function renderThreads() {
     const threadListEl = document.getElementById("threadList");
+    if (!threadListEl) return;
+
     const posts = JSON.parse(localStorage.getItem("community_posts")) || [];
 
     if (posts.length === 0) {
@@ -277,4 +278,20 @@ function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
+}
+
+// =========================
+// HELP POST CREATION
+// =========================
+
+if (window.location.pathname.includes("helpPost_Creation.html")) {
+    if (!currentUser) {
+        alert("You must be registered and logged in to create a post.");
+        window.location.href = "/static/pages/register.html";
+        return;
+    }
+    if (usernameInput) {
+        usernameInput.value = currentUser;
+        usernameInput.readOnly = true;
+    }
 }

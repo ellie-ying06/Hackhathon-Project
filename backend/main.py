@@ -40,6 +40,11 @@ def marketplace():
 def help_page():
     return FileResponse(FRONTEND_DIR / "pages" / "help.html")
 
+# Serve the Help page
+@app.get("/post-detail")
+def help_detail_page():
+    return FileResponse(FRONTEND_DIR / "pages" / "post-detail.html")
+
 # Backend health check
 @app.get("/api/health")
 def health_check():

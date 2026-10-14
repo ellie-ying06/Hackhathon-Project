@@ -4,57 +4,11 @@
 // MARKETPLACE
 // =========================
 
-const products = [
-    {
-        name: "Study Desk",
-        price: 50,
-        condition: "Used",
-        category: "Furniture",
-        location: "Sunway",
-        image: "/static/images/desk.jpg"
-    },
-
-    {
-        name: "Computer Science Textbook",
-        price: 20,
-        condition: "Good",
-        category: "Books",
-        location: "Subang Jaya",
-        image: "/static/images/book.jpg"
-    },
-
-    {
-        name: "Cotton T-Shirt",
-        price: 10,
-        condition: "Like New",
-        category: "Clothing",
-        location: "Puchong",
-        image: "/static/images/shirt.jpg"
-    },
-
-    {
-        name: "Wireless Keyboard",
-        price: 25,
-        condition: "Used",
-        category: "Electronics",
-        location: "Sunway",
-        image: "/static/images/keyboard.jpg"
-    },
-
-    {
-        name: "Second hand comic",
-        price: 3,
-        condition: "Used",
-        category: "Books",
-        location: "Sunway",
-        image: "/static/images/comic.jpg"
-    }
-];
-
 const productGrid = document.getElementById("productGrid");
 const searchInput = document.getElementById("searchInput");
 const categoryButtons = document.querySelectorAll(".category-btn");
 
+let products = [];
 let selectedCategory = "All";
 // Display products
 
@@ -77,27 +31,36 @@ function displayProducts(productList) {
         const card = document.createElement("div");
         card.className = "product-card";
         card.innerHTML = `
-            <img
-                src="${product.image}"
-                alt="${product.name}"
-                class="product-image"
-            >
+        <img
+        src="${product.image || '/static/images/placeholder.jpg'}"
+        alt="${product.name}"
+        class="product-image"
+    >
 
-            <div class="product-info">
-                <h3 class="product-name">
-                    ${product.name}
-                </h3>
-                <p class="product-price">
-                    RM ${product.price}
-                </p>
-                <span class="product-condition">
-                    ${product.condition}
-                </span>
-                <p class="product-location">
-                    📍 ${product.location}
-                </p>
-            </div>
-        `;
+    <div class="product-info">
+
+        <h3 class="product-name">
+            ${product.name}
+        </h3>
+
+        <p class="product-price">
+            RM ${product.price.toFixed(2)}
+        </p>
+
+        <span class="product-condition">
+            ${product.condition}
+        </span>
+
+        <p class="product-location">
+            📍 ${product.location}
+        </p>
+
+        <p class="product-seller">
+            👤 ${product.seller}
+        </p>
+
+    </div>
+`;
         productGrid.appendChild(card);
     });
 }
@@ -120,14 +83,19 @@ categoryButtons.forEach(button => {
     });
 });
 
-displayProducts(products);
+fetchProducts();
+
 
 function filterProducts() {
-    const searchText = searchInput.value.toLowerCase().trim();
+    const searchText = searchInput
+        ? searchInput.value.toLowerCase().trim()
+        : "";
 
     const filteredProducts = products.filter(product => {
         const matchesSearch =
-            product.name.toLowerCase().includes(searchText);
+            product.name.toLowerCase().includes(searchText) ||
+            product.category.toLowerCase().includes(searchText) ||
+            product.location.toLowerCase().includes(searchText);
 
         const matchesCategory =
             selectedCategory === "All" ||
@@ -137,4 +105,29 @@ function filterProducts() {
     });
 
     displayProducts(filteredProducts);
+}
+
+
+async function fetchProducts() {
+    try {
+        const response = await fetch("/api/products");
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch products");
+        }
+
+        products = await response.json();
+
+        displayProducts(products);
+
+    } catch (error) {
+        console.error("Error loading products:", error);
+
+        productGrid.innerHTML = `
+            <div class="no-products">
+                <h3>Unable to load products</h3>
+                <p>Please try again later.</p>
+            </div>
+        `;
+    }
 }

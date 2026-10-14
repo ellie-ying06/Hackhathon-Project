@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from database.database import init_db
 from modules.community import router as community_router
+from modules.marketplace import router as marketplace_router
 
 app = FastAPI(title="NeighbourHub API")
 
@@ -14,6 +15,7 @@ init_db()
 
 # Register the Community API
 app.include_router(community_router)
+app.include_router(marketplace_router)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = PROJECT_ROOT / "frontend"

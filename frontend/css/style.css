@@ -93,6 +93,7 @@ nav a.active {
 
 .card {
     display: block;
+    position: relative;
     padding: 25px;
     border-radius: 12px;
     background: white;

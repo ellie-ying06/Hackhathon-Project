@@ -37,6 +37,22 @@ def home():
 def marketplace():
     return FileResponse(FRONTEND_DIR / "pages" / "market.html")
 
+
+# Serve the Marketplace product detail page
+@app.get("/product")
+def product_detail_page():
+    return FileResponse(FRONTEND_DIR / "pages" / "product.html")
+
+# @app.get("/product")
+# def product_detail_page():
+#     return FileResponse(FRONTEND_DIR / "pages" / "product.html")
+
+@app.get("/edit-product")
+def edit_product_page():
+    return FileResponse(
+        FRONTEND_DIR / "pages" / "edit-product.html"
+    )
+
 # Serve the Help page
 @app.get("/help")
 def help_page():

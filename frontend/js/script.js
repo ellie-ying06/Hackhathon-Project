@@ -9,13 +9,15 @@ const categoryButtons = document.querySelectorAll(".category-btn");
 
 let products = [];
 let selectedCategory = "All";
-// Display products
 
+// Display products
 function displayProducts(productList) {
     if (!productGrid) {
         return;
     }
+
     productGrid.innerHTML = "";
+
     if (productList.length === 0) {
         productGrid.innerHTML = `
             <div class="no-products">
@@ -29,40 +31,58 @@ function displayProducts(productList) {
     productList.forEach(product => {
         const card = document.createElement("div");
         card.className = "product-card";
+        card.style.cursor = "pointer";
+
+        const safeText = (value) =>
+            String(value ?? "").replace(/[&<>"']/g, char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[char]);
+
         card.innerHTML = `
-        <img
-        src="${product.image || '/static/images/placeholder.jpg'}"
-        alt="${product.name}"
-        class="product-image"
-    >
+            <img
+                src="${safeText(
+                    product.image || "/static/images/placeholder.jpg"
+                )}"
+                alt="${safeText(product.name)}"
+                class="product-image"
+            >
 
-    <div class="product-info">
+            <div class="product-info">
+                <h3 class="product-name">
+                    ${safeText(product.name)}
+                </h3>
 
-        <h3 class="product-name">
-            ${product.name}
-        </h3>
+                <p class="product-price">
+                    RM ${Number(product.price).toFixed(2)}
+                </p>
 
-        <p class="product-price">
-            RM ${product.price.toFixed(2)}
-        </p>
+                <span class="product-condition">
+                    ${safeText(product.condition)}
+                </span>
 
-        <span class="product-condition">
-            ${product.condition}
-        </span>
+                <p class="product-location">
+                    📍 ${safeText(product.location)}
+                </p>
 
-        <p class="product-location">
-            📍 ${product.location}
-        </p>
+                <p class="product-seller">
+                    👤 ${safeText(product.seller)}
+                </p>
+            </div>
+        `;
 
-        <p class="product-seller">
-            👤 ${product.seller}
-        </p>
+        card.addEventListener("click", () => {
+            window.location.href =
+                `/product?id=${encodeURIComponent(product.product_id)}`;
+        });
 
-    </div>
-`;
         productGrid.appendChild(card);
     });
 }
+
 
 if (searchInput) {
     searchInput.addEventListener("input", filterProducts);

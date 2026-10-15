@@ -36,6 +36,22 @@ def init_db():
                 FOREIGN KEY (member_id)
                     REFERENCES resident_member(member_id)
             );
+
+            CREATE TABLE IF NOT EXISTS marketplace_product (
+                product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                member_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                price REAL NOT NULL,
+                category TEXT NOT NULL,
+                condition TEXT NOT NULL,
+                location TEXT NOT NULL,
+                description TEXT,
+                image TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+                FOREIGN KEY (member_id)
+                    REFERENCES resident_member(member_id)
+            );
         """)
 
         conn.commit()

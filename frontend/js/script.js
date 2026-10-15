@@ -41,6 +41,15 @@ function displayProducts(productList) {
                 '"': "&quot;",
                 "'": "&#39;"
             })[char]);
+        
+        // Temporary UI-only ownership check for local demo
+        const currentMemberId = Number(
+            sessionStorage.getItem("member_id")
+        );
+
+        const isOwner =
+            currentMemberId > 0 &&
+            currentMemberId === Number(product.member_id);  
 
         card.innerHTML = `
             <img
@@ -68,18 +77,55 @@ function displayProducts(productList) {
                     📍 ${safeText(product.location)}
                 </p>
 
+                
                 <p class="product-seller">
                     👤 ${safeText(product.seller)}
                 </p>
-            </div>
-        `;
 
-        card.addEventListener("click", () => {
-            window.location.href =
-                `/product?id=${encodeURIComponent(product.product_id)}`;
+                ${isOwner ? `
+                <div class="owner-actions">
+                    <button class="edit-product-btn" type="button">
+                        Edit Product
+                </button>
+
+                <button class="delete-product-btn" type="button">
+                        Delete
+                </button>
+                </div>
+                ` : `
+                <span class="buyer-label">
+                         View Product Details
+                </span>
+                `}
+
+            
+        </div>
+    `;
+
+    // Only the seller sees Edit and Delete buttons
+    if (isOwner) {
+        const editBtn = card.querySelector(".edit-product-btn");
+        const deleteBtn = card.querySelector(".delete-product-btn");
+
+        editBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            alert("Edit Product feature coming next!");
         });
 
-        productGrid.appendChild(card);
+        deleteBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            alert("Delete Product feature coming next!");
+        });
+    }
+
+    // Clicking the product card opens product details
+    card.addEventListener("click", () => {
+        window.location.href =
+            `/product?id=${encodeURIComponent(product.product_id)}`;
+    });
+
+    productGrid.appendChild(card);
+
     });
 }
 
@@ -338,4 +384,90 @@ function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
+}
+
+
+/* =========================
+   MARKETPLACE POST ITEM
+========================= */
+
+const postItemBtn = document.getElementById("postItemBtn");
+const postItemModal = document.getElementById("postItemModal");
+const closePostModal = document.getElementById("closePostModal");
+const postItemForm = document.getElementById("postItemForm");
+
+// Open and close the popup
+if (postItemBtn && postItemModal && closePostModal) {
+
+    postItemBtn.addEventListener("click", () => {
+        postItemModal.hidden = false;
+    });
+
+    closePostModal.addEventListener("click", () => {
+        postItemModal.hidden = true;
+    });
+
+    postItemModal.addEventListener("click", (event) => {
+        if (event.target === postItemModal) {
+            postItemModal.hidden = true;
+        }
+    });
+}
+
+// Submit item to FastAPI
+if (postItemForm) {
+
+    postItemForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const memberId = sessionStorage.getItem("member_id");
+
+        if (!memberId) {
+            alert("Please register before posting an item.");
+            window.location.href = "/static/pages/register.html";
+            return;
+        }
+
+        const product = {
+            member_id: Number(memberId),
+            name: document.getElementById("itemTitle").value.trim(),
+            price: Number(document.getElementById("itemPrice").value),
+            category: document.getElementById("itemCategory").value,
+            condition: document.getElementById("itemCondition").value,
+            location: document.getElementById("itemLocation").value.trim(),
+            description: document.getElementById("itemDescription").value.trim(),
+            image: ""
+        };
+
+        try {
+            const response = await fetch("/api/products", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(product)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    typeof result.detail === "string"
+                        ? result.detail
+                        : "Failed to post item."
+                );
+            }
+
+            alert("Item posted successfully!");
+
+            postItemForm.reset();
+            postItemModal.hidden = true;
+
+            await fetchProducts();
+
+        } catch (error) {
+            console.error("Error posting item:", error);
+            alert(error.message);
+        }
+    });
 }

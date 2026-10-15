@@ -128,20 +128,24 @@
                 </div>
 
 
+                
+                <!-- Seller information for local demo -->
                 <div class="form-group">
-                    <label for="member_id">Seller Member ID *</label>
-                    <input
-                        type="number"
-                        id="member_id"
-                        name="member_id"
-                        min="1"
-                        required
-                        placeholder="Enter an existing member ID"
-                    >
-                    <small>
-                        Demo only: use an existing resident's member ID.
-                    </small>
+                    <label for="member_id">Seller Member ID</label>
+
+                <input
+                    type="number"
+                    id="member_id"
+                    name="member_id"
+                    readonly
+                    required
+                >
+
+                <small>
+                    Automatically filled using your registration details.
+                </small>
                 </div>
+
 
                 <button type="submit" id="submitProductBtn" class="sell-item-btn">
                     Publish Product

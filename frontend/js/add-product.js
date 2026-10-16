@@ -3,15 +3,6 @@ const addProductForm = document.getElementById("addProductForm");
 const formMessage = document.getElementById("formMessage");
 const submitProductBtn = document.getElementById("submitProductBtn");
 
-// Get the registered test member ID
-const memberId = sessionStorage.getItem("member_id");
-
-// Automatically fill the Seller Member ID field
-const memberInput = document.getElementById("member_id");
-
-if (memberInput && memberId) {
-    memberInput.value = memberId;
-}
 
 const imageInput = document.getElementById("image");
 const imagePreviewContainer = document.getElementById("imagePreviewContainer");
@@ -66,10 +57,12 @@ imageInput.addEventListener("change", () => {
 
 addProductForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!memberId) {
-    alert("Please register first before selling an item.");
-    window.location.href = "/static/pages/register.html";
-    return;
+    const sessionResponse = await fetch("/api/me");
+
+    if (!sessionResponse.ok) {
+        alert("Please log in before selling an item.");
+        window.location.href = "/static/pages/login.html";
+        return;
     }
 
     formMessage.textContent = "";
@@ -79,7 +72,6 @@ addProductForm.addEventListener("submit", async (event) => {
     const imageFile = imageInput.files[0];
 
     const productData = {
-        member_id: Number(memberId),
         name: formData.get("name").trim(),
         price: Number(formData.get("price")),
         category: formData.get("category"),
@@ -92,8 +84,6 @@ addProductForm.addEventListener("submit", async (event) => {
     if (
         !productData.name ||
         !productData.location ||
-        !Number.isInteger(productData.member_id) ||
-        productData.member_id < 1 ||
         !Number.isFinite(productData.price) ||
         productData.price < 0
     ) {

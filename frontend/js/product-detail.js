@@ -1,6 +1,22 @@
 
 const productDetail = document.getElementById("productDetail");
 
+
+async function getLoggedInMember() {
+    const response = await fetch("/api/me");
+
+    if (response.status === 401) {
+        return null;
+    }
+
+    if (!response.ok) {
+        throw new Error("Unable to check login status.");
+    }
+
+    return await response.json();
+}
+
+
 function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -33,6 +49,12 @@ async function loadProductDetails() {
 
         const product = await response.json();
 
+        const currentMember = await getLoggedInMember();
+
+        const isOwner =
+            currentMember !== null &&
+            Number(currentMember.member_id) === Number(product.member_id);
+
         productDetail.innerHTML = `
             <div class="product-detail-card">
                 <img
@@ -64,7 +86,7 @@ async function loadProductDetails() {
                     </p>
 
                     
-                ${Number(sessionStorage.getItem("member_id")) === Number(product.member_id)
+                ${isOwner
                     ? `
                         <div class="product-actions">
                             <a
@@ -163,7 +185,6 @@ async function loadProductDetails() {
                 deleteButton.textContent = "Deleting...";
 
                 try {
-                    const memberId = Number(sessionStorage.getItem("member_id"));
                     const response = await fetch(
                         `/api/products/${encodeURIComponent(product.product_id)}?member_id=${memberId}`,
                         {

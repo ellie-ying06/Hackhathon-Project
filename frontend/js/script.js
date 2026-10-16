@@ -82,41 +82,31 @@ function displayProducts(productList) {
                     👤 ${safeText(product.seller)}
                 </p>
 
-                ${isOwner ? `
-                <div class="owner-actions">
-                    <button class="edit-product-btn" type="button">
-                        Edit Product
-                </button>
-
-                <button class="delete-product-btn" type="button">
-                        Delete
-                </button>
-                </div>
-                ` : `
                 <span class="buyer-label">
-                         View Product Details
+                    View Product Details
                 </span>
-                `}
-
             
         </div>
     `;
 
     // Only the seller sees Edit and Delete buttons
-    if (isOwner) {
-        const editBtn = card.querySelector(".edit-product-btn");
-        const deleteBtn = card.querySelector(".delete-product-btn");
+    
+    // Only the seller sees Edit and Delete buttons
+    // if (isOwner) {
+    //     const editBtn = card.querySelector(".edit-product-btn");
+    //     const deleteBtn = card.querySelector(".delete-product-btn");
 
-        editBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            alert("Edit Product feature coming next!");
-        });
+    //     editBtn.addEventListener("click", async (event) => {
+    //         event.stopPropagation();
+    //         await editProduct(product);
+    //     });
 
-        deleteBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            alert("Delete Product feature coming next!");
-        });
-    }
+    //     deleteBtn.addEventListener("click", async (event) => {
+    //         event.stopPropagation();
+    //         await deleteProduct(product);
+    //     });
+    // }
+
 
     // Clicking the product card opens product details
     card.addEventListener("click", () => {
@@ -149,6 +139,141 @@ categoryButtons.forEach(button => {
 });
 
 fetchProducts();
+
+
+async function editProduct(product) {
+    const memberId = Number(sessionStorage.getItem("member_id"));
+
+    if (!memberId || memberId !== Number(product.member_id)) {
+        alert("You can only edit your own products.");
+        return;
+    }
+
+    // Ask for the updated product details.
+    // Press Cancel to stop editing.
+    const name = prompt("Product name:", product.name);
+    if (name === null) return;
+
+    const priceText = prompt("Price (RM):", product.price);
+    if (priceText === null) return;
+
+    const category = prompt("Category:", product.category);
+    if (category === null) return;
+
+    const condition = prompt("Condition:", product.condition);
+    if (condition === null) return;
+
+    const location = prompt("Location:", product.location);
+    if (location === null) return;
+
+    const description = prompt(
+        "Description:",
+        product.description || ""
+    );
+    if (description === null) return;
+
+    // Validate the input before sending it to the backend.
+    const trimmedName = name.trim();
+    const trimmedCategory = category.trim();
+    const trimmedCondition = condition.trim();
+    const trimmedLocation = location.trim();
+    const price = Number(priceText);
+
+    if (
+        !trimmedName ||
+        !trimmedCategory ||
+        !trimmedCondition ||
+        !trimmedLocation ||
+        priceText.trim() === "" ||
+        !Number.isFinite(price) ||
+        price < 0
+    ) {
+        alert("Please enter valid product details and a price of RM 0 or above.");
+        return;
+    }
+
+    const updatedProduct = {
+        name: trimmedName,
+        price: price,
+        category: trimmedCategory,
+        condition: trimmedCondition,
+        location: trimmedLocation,
+        description: description.trim(),
+        image: product.image || ""
+    };
+
+    try {
+        const response = await fetch(
+            `/api/products/${product.product_id}?member_id=${memberId}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(updatedProduct)
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.detail || "Failed to update product."
+            );
+        }
+
+        alert("Product updated successfully!");
+
+        // Reload products to show the latest information.
+        await fetchProducts();
+
+    } catch (error) {
+        console.error("Edit product error:", error);
+        alert(error.message || "Unable to update product.");
+    }
+}
+
+
+async function deleteProduct(product) {
+    const memberId = Number(sessionStorage.getItem("member_id"));
+
+    if (!memberId || memberId !== Number(product.member_id)) {
+        alert("You can only delete your own products.");
+        return;
+    }
+
+    const confirmed = confirm(
+        `Are you sure you want to delete "${product.name}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(
+            `/api/products/${product.product_id}?member_id=${memberId}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.detail || "Failed to delete product."
+            );
+        }
+
+        alert("Product deleted successfully!");
+
+        // Reload products to remove the deleted item.
+        await fetchProducts();
+
+    } catch (error) {
+        console.error("Delete product error:", error);
+        alert(error.message || "Unable to delete product.");
+    }
+}
 
 
 function filterProducts() {
@@ -236,34 +361,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 2. Handle New Post Submission
     const postForm = document.getElementById("postForm");
+    
     if (postForm) {
-        postForm.addEventListener("submit", (e) => {
+        postForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-            const usernameInput = document.getElementById("usernameInput");
-            const username = usernameInput ? usernameInput.value.trim() : "Anonymous";
+
+            const memberId = sessionStorage.getItem("member_id");
             const title = document.getElementById("titleInput").value.trim();
             const content = document.getElementById("contentInput").value.trim();
+
+            if (!memberId) {
+                alert("Please register first before creating a post.");
+                window.location.href = "/static/pages/register.html";
+                return;
+            }
 
             if (!title || !content) {
                 alert("Please fill in all required fields.");
                 return;
             }
 
-            const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-            const newPost = {
-                id: Date.now(),
-                title: title,
-                username: username,
-                content: content,
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                comments: []
-            };
+            try {
+                const response = await fetch("/api/posts", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        member_id: Number(memberId),
+                        title: title,
+                        content: content,
+                        category: "General"
+                    })
+                });
 
-            posts.unshift(newPost);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-            window.location.href = "/static/pages/help.html";
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        typeof result.detail === "string"
+                            ? result.detail
+                            : "Could not create your post."
+                    );
+                }
+
+                alert("Your post has been published!");
+                window.location.href = "/static/pages/help.html";
+
+            } catch (error) {
+                console.error("Create post error:", error);
+                alert(error.message || "Something went wrong. Please try again.");
+            }
         });
     }
+
 
     // 3. Render Thread Detail View & Comments on post-detail.html
     const detailContainer = document.getElementById("threadDetailContainer");
@@ -272,113 +423,237 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-function renderThreads() {
+
+async function renderThreads() {
     const threadListEl = document.getElementById("threadList");
     if (!threadListEl) return;
 
-    const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    // Show a loading message while fetching posts
+    threadListEl.innerHTML = "<p>Loading posts...</p>";
 
-    if (posts.length === 0) {
+    try {
+        // Get posts from the FastAPI backend
+        const response = await fetch("/api/posts");
+
+        if (!response.ok) {
+            throw new Error("Failed to load community posts.");
+        }
+
+        const posts = await response.json();
+
+        if (posts.length === 0) {
+            threadListEl.innerHTML = `
+                <div class="empty-state">
+                    <p>Be the First Neighbour to reach out for Help or Share an Offer!</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Display posts returned by the database
+        threadListEl.innerHTML = posts.map(post => `
+            <a href="/static/pages/post-detail.html?id=${post.post_id}"
+               class="thread-card">
+                <h3 class="thread-title">
+                    ${escapeHTML(post.title)}
+                </h3>
+
+                <div class="thread-meta">
+                    <span>👤 @${escapeHTML(post.author || "Anonymous")}</span>
+                    <span>💬 ${post.reply_count} ${post.reply_count === 1 ? "Reply" : "Replies"}</span>
+                    <span>${escapeHTML(post.created_at || "")}</span>
+                </div>
+            </a>
+        `).join("");
+
+    } catch (error) {
+        console.error("Load posts error:", error);
+
         threadListEl.innerHTML = `
             <div class="empty-state">
-                <h3>No requests or posts yet</h3>
-                <p>Be the First Neighbour to reach out for Help or Share an Offer!</p>
+                <p>Unable to load posts. Please try again later.</p>
             </div>
         `;
-        return;
     }
-
-    threadListEl.innerHTML = posts.map(post => `
-        <a href="/static/pages/post-detail.html?id=${post.id}" class="thread-card">
-            <h3 class="thread-title">${escapeHTML(post.title)}</h3>
-            <div class="thread-meta">
-                <span>👤 @${escapeHTML(post.username)}</span>
-                <span>💬 ${post.comments ? post.comments.length : 0} Replies</span>
-                <span> ${post.date}</span>
-            </div>
-        </a>
-    `).join("");
 }
 
-function renderPostDetail() {
+
+async function renderPostDetail() {
     const detailContainer = document.getElementById("threadDetailContainer");
     if (!detailContainer) return;
 
     const urlParams = new URLSearchParams(window.location.search);
     const postId = Number(urlParams.get("id"));
-    const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    const post = posts.find(p => Number(p.id) === postId);
 
-    if (!post) {
+    if (!postId) {
         detailContainer.innerHTML = `
             <a href="/static/pages/help.html" class="back-link">← Back to Feed</a>
             <div class="empty-state">
-                <h3>Post not found</h3>
-                <p>This post may have been removed or does not exist.</p>
+                <h3>Invalid post</h3>
+                <p>Please select a post from the Help feed.</p>
             </div>
         `;
         return;
     }
 
-    const commentsHTML = post.comments && post.comments.length > 0 
-        ? post.comments.map(c => `
-            <div class="comment-card" style="background: #f4f7f5; padding: 12px 16px; border-radius: 8px; margin-bottom: 10px;">
-                <div style="font-size: 0.9rem; color: #174d40; margin-bottom: 4px;"><strong>@${escapeHTML(c.username)}</strong> <span style="color: #777; font-size: 0.8rem;">• ${c.date}</span></div>
-                <div style="color: #333; font-size: 0.95rem;">${escapeHTML(c.text)}</div>
-            </div>
-          `).join("")
-        : `<p style="color: #66786e; font-style: italic;">No comments yet. Be the first to Lend a Hand!</p>`;
+    detailContainer.innerHTML = "<p>Loading post...</p>";
 
-    detailContainer.innerHTML = `
-        <a href="/static/pages/help.html" class="back-link">← Back to Neighbour Help Feed</a>
-        
-        <div class="detail-card" style="margin-bottom: 30px;">
-            <h2 class="detail-title">${escapeHTML(post.title)}</h2>
-            <div class="detail-meta">Posted by <strong>@${escapeHTML(post.username)}</strong> on ${post.date}</div>
-            <div class="detail-body" style="margin-top: 15px; line-height: 1.6;">${escapeHTML(post.content)}</div>
-        </div>
+    try {
+        // Load the post
+        const postResponse = await fetch(`/api/posts/${postId}`);
 
-        <div class="comments-section">
-            <h3 style="color: #174d40; margin-bottom: 15px;">Community Replies (${post.comments ? post.comments.length : 0})</h3>
-            <div id="commentsList" style="margin-bottom: 25px;">
-                ${commentsHTML}
-            </div>
+        if (!postResponse.ok) {
+            throw new Error(
+                postResponse.status === 404
+                    ? "Post not found."
+                    : "Failed to load post."
+            );
+        }
 
-            <div class="form-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <h4 style="margin-top: 0; color: #174d40;">Leave a Reply</h4>
-                <form id="commentForm">
-                    <div style="margin-bottom: 12px;">
-                        <label for="commentText" style="display: block; margin-bottom: 5px; font-weight: 500;">Your Message</label>
-                        <textarea id="commentText" rows="3" placeholder="..." required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"></textarea>
+        const post = await postResponse.json();
+
+        // Load replies for this post
+        const repliesResponse = await fetch(
+            `/api/posts/${postId}/replies`
+        );
+
+        if (!repliesResponse.ok) {
+            throw new Error("Failed to load replies.");
+        }
+
+        const replies = await repliesResponse.json();
+
+        const repliesHTML = replies.length > 0
+            ? replies.map(reply => `
+                <div class="comment-card"
+                     style="background: #f4f7f5; padding: 12px 16px; border-radius: 8px; margin-bottom: 10px;">
+                    <div style="font-size: 0.9rem; color: #174d40; margin-bottom: 4px;">
+                        <strong>@${escapeHTML(reply.author || "Neighbour")}</strong>
+                        <span style="color: #777; font-size: 0.8rem;">
+                            • ${escapeHTML(reply.created_at || "")}
+                        </span>
                     </div>
-                    <button type="submit" class="btn">Post Reply</button>
-                </form>
+                    <div style="color: #333; font-size: 0.95rem; white-space: pre-wrap;">${escapeHTML(reply.content)}</div>
+                </div>
+            `).join("")
+            : `<p style="color: #66786e; font-style: italic;">
+                No replies yet. Be the first to Lend a Hand!
+               </p>`;
+
+        detailContainer.innerHTML = `
+            <a href="/static/pages/help.html" class="back-link">
+                ← Back to Neighbour Help Feed
+            </a>
+
+            <div class="detail-card" style="margin-bottom: 30px;">
+                <h2 class="detail-title">${escapeHTML(post.title)}</h2>
+                <div class="detail-meta">
+                    Posted by <strong>@${escapeHTML(post.author || "Anonymous")}</strong>
+                    on ${escapeHTML(post.created_at || "")}
+                </div>
+                <div class="detail-body" style="margin-top: 15px; line-height: 1.6; white-space: pre-wrap;">${escapeHTML(post.content)}</div>
             </div>
-        </div>
-    `;
 
-    const commentForm = document.getElementById("commentForm");
-    if (commentForm) {
-        commentForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const cUser = document.getElementById("commentUser").value.trim();
-            const cText = document.getElementById("commentText").value.trim();
+            <div class="comments-section">
+                <h3 style="color: #174d40; margin-bottom: 15px;">
+                    Community Replies (${replies.length})
+                </h3>
 
-            if (!cUser || !cText) return;
+                <div id="commentsList" style="margin-bottom: 25px;">
+                    ${repliesHTML}
+                </div>
 
-            const newComment = {
-                username: cUser,
-                text: cText,
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            };
+                <div class="form-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <h4 style="margin-top: 0; color: #174d40;">Leave a Reply</h4>
+                    <form id="commentForm">
+                        <div style="margin-bottom: 12px;">
+                            <label for="commentText" style="display: block; margin-bottom: 5px; font-weight: 500;">
+                                Your Message
+                            </label>
+                            <textarea id="commentText" rows="3"
+                                placeholder="Write your reply..."
+                                required
+                                style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Post Reply</button>
+                    </form>
+                </div>
+            </div>
+        `;
 
-            post.comments.push(newComment);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+        // Submit a reply to the backend
+        const commentForm = document.getElementById("commentForm");
 
-            renderPostDetail();
+        commentForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const memberId = sessionStorage.getItem("member_id");
+            const commentText = document.getElementById("commentText");
+            const content = commentText.value.trim();
+            const submitButton = commentForm.querySelector(
+                'button[type="submit"]'
+            );
+
+            if (!memberId) {
+                alert("Please register first before replying.");
+                window.location.href = "/static/pages/register.html";
+                return;
+            }
+
+            if (!content) {
+                alert("Please enter a reply.");
+                return;
+            }
+
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch("/api/replies", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        post_id: postId,
+                        member_id: Number(memberId),
+                        content: content
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        typeof result.detail === "string"
+                            ? result.detail
+                            : "Failed to submit reply."
+                    );
+                }
+
+                // Reload the post and replies to show the new reply
+                await renderPostDetail();
+
+            } catch (error) {
+                console.error("Submit reply error:", error);
+                alert(error.message || "Unable to submit reply.");
+                submitButton.disabled = false;
+            }
         });
+
+    } catch (error) {
+        console.error("Load post detail error:", error);
+
+        detailContainer.innerHTML = `
+            <a href="/static/pages/help.html" class="back-link">← Back to Feed</a>
+            <div class="empty-state">
+                <h3>Unable to load post</h3>
+                <p>${escapeHTML(error.message || "Please try again later.")}</p>
+            </div>
+        `;
     }
 }
+
+
 
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, 

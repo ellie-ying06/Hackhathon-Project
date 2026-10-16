@@ -22,6 +22,7 @@ def init_db():
                 email TEXT NOT NULL UNIQUE,
                 phone TEXT,
                 address TEXT,
+                password_hash TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -52,8 +53,30 @@ def init_db():
                 FOREIGN KEY (member_id)
                     REFERENCES resident_member(member_id)
             );
+            CREATE TABLE IF NOT EXISTS post_reply (
+            reply_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            member_id INTEGER NOT NULL,
+            content TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (post_id)
+                REFERENCES post_content(post_id)
+                ON DELETE CASCADE,
+            FOREIGN KEY (member_id)
+                REFERENCES resident_member(member_id)
+            );
         """)
+        # Add password_hash to existing databases if it is missing
+        columns = conn.execute(
+            "PRAGMA table_info(resident_member)"
+        ).fetchall()
 
+        column_names = [column["name"] for column in columns]
+
+        if "password_hash" not in column_names:
+            conn.execute(
+                "ALTER TABLE resident_member ADD COLUMN password_hash TEXT"
+            )
         conn.commit()
         print("Database initialized successfully!")
 

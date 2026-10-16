@@ -14,7 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
             full_name: document.getElementById("fullName").value.trim(),
             email: document.getElementById("email").value.trim(),
             phone: document.getElementById("phone").value.trim(),
-            address: document.getElementById("address").value
+            address: document.getElementById("address").value,
+            password: document.getElementById("password").value
         };
 
         registerMessage.textContent = "Registering...";
@@ -47,7 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
             registerMessage.style.color = "green";
 
             console.log("New Member ID:", result.member_id);
-            sessionStorage.setItem("member_id", String(result.member_id)); //stores the new test member's ID for the current browser tab
+            sessionStorage.setItem("member_id", String(result.member_id));
+            sessionStorage.setItem("member_name", resident.full_name); //stores the new test member's ID for the current browser tab
 
             // Clear form
             registerForm.reset();

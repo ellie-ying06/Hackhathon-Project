@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | CommunityConnect</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- =========================
+         NAVIGATION BAR
+    ========================== -->
+  <header class="navbar">
+    <a class="logo" href="/">CommunityConnect</a>
+
+    <nav>
+      <a href="/">Home</a>
+      <a href="/static/pages/community.html">Events</a>
+      <a href="/static/pages/register.html">Register</a>
+      <a href="/market">Marketplace</a>
+      <a href="/help">Neighbour Help</a>
+       <a href="/static/pages/profilepage.html"
+        class="profile-pic" title="My Profile" aria-label="My Profile">
+      <img src="/static/images/user.png" alt="Profile" class="nav-avatar"> </a>
+</a>
+    </nav>
+  </header>
+
+  <main class="profile-container">
+
+    <!-- Page Heading -->
+    <section class="page-heading">
+      <h1>My Profile</h1>
+      <p>Manage your profile and stay connected with your community.</p>
+    </section>
+
+    <!-- Profile Overview -->
+    <section class="profile-card">
+      <div class="profile-info">
+        <div class="nav-profile" title="My Profile" aria-label="My Profile">
+      <img src="/static/images/user.png" alt="Profile" class="nav-avatar"> </div>
+
+        <div class="profile-details">
+          <h2 id="profileName">Loading...</h2>
+            <p id="profileEmail"></p>
+            <p id="profileLocation"></p>
+          <span class="member-badge">Community Member</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" disabled title="Coming soon">
+        Edit Profile
+      </button>
+    </section>
+
+    <!-- Activity Summary -->
+    <section class="section">
+      <h2>Activity Summary</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <h3>3</h3>
+          <p>Events Joined</p>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">🛍️</div>
+          <h3>2</h3>
+          <p>Marketplace Listings</p>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">🤝</div>
+          <h3>1</h3>
+          <p>Help Requests</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- My Events -->
+    <section class="section">
+      <div class="section-heading">
+        <h2>My Events</h2>
+        <a href="/static/pages/community.html" class="view-link">
+          Explore Events →
+        </a>
+      </div>
+
+      <div class="content-card">
+        <div class="list-item">
+          <div class="item-icon">🌱</div>
+
+          <div class="item-details">
+            <h3>Community Cleanup</h3>
+            <p>24 October 2026 · Community Park</p>
+          </div>
+
+          <span class="status registered">Registered</span>
+        </div>
+
+        <div class="list-item">
+          <div class="item-icon">♻️</div>
+
+          <div class="item-details">
+            <h3>Recycling Workshop</h3>
+            <p>31 October 2026 · Community Hall</p>
+          </div>
+
+          <span class="status registered">Registered</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- My Marketplace -->
+    <section class="section">
+      <div class="section-heading">
+        <h2>My Marketplace</h2>
+        <a href="/market" class="view-link">
+          View Marketplace →
+        </a>
+      </div>
+
+      <div class="content-card">
+        <div class="list-item">
+          <div class="item-icon">📚</div>
+
+          <div class="content-card" id="myMarketplace">
+            <p class="empty-state">Loading listings...</p>
+            </div>
+
+          <span class="status active-status">Active</span>
+        </div>
+
+        <div class="list-item">
+          <div class="item-icon">🪴</div>
+
+          <div class="item-details">
+            <h3>Small Indoor Plant</h3>
+            <p>RM 15.00 · Listed for sale</p>
+          </div>
+
+          <span class="status sold">Sold</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Account Settings -->
+    <section class="section">
+      <h2>Account Settings</h2>
+
+      <div class="content-card settings-card">
+        <div class="setting-item">
+          <div>
+            <h3>Change Password</h3>
+            <p>Update your account password.</p>
+          </div>
+          <button class="btn-outline" disabled>Change</button>
+        </div>
+
+        <div class="setting-item">
+          <div>
+            <h3>Log Out</h3>
+            <p>Sign out of your account securely.</p>
+          </div>
+          <button class="btn-outline logout-btn" disabled>
+            Log Out
+          </button>
+        </div>
+      </div>
+
+      <p class="demo-note">
+        Demo profile — account actions will be connected later.
+      </p>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>CommunityConnect © 2026 | FiveNova</p>
+  </footer>
+
+</body>
+</html>

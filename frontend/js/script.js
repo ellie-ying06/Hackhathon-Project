@@ -151,38 +151,132 @@ async function fetchProducts() {
     }
 }
 
-// =========================
-// NEIGHBOUR HELP & THREADS
-// =========================
-// 1. Force-initialize sample posts immediately if localStorage is empty
-const STORAGE_KEY = "community_posts_v2";
+// =================================
+// THREADS, HELP, EVENTS & COMMUNITY
+// =================================
+// Check which page is being used 
+let pageType = "help"; // Help page as default configuration
 
-// Ensure sample posts exist immediately
-if (!localStorage.getItem(STORAGE_KEY)) {
-    const samplePosts = [
-        {
-            id: 1,
-            title: "Need help carrying a heavy couch to the 2nd floor",
-            username: "Sarah_M",
-            content: "Hi neighbors! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
-            date: "Oct 14, 2026",
-            comments: [
-                { username: "Renu", text: "I'm free Saturday morning! Happy to help carry it.", date: "Oct 14, 2026" },
-                { username: "Liam", text: "Count me in too if you need a second pair of hands.", date: "Oct 15, 2026" }
-            ]
-        },
-        {
-            id: 2,
-            title: "!Need Help Taking care of 2 pet cats next Friday to Tuesday",
-            username: "Alisha",
-            content: "Can anyone help to take care of my two pet cats as I'm going on a vacation next Friday? Feel free to message me if you need to borrow it for your yard.",
-            date: "Oct 13, 2026",
-            comments: [
-            ]
-        }
-    ];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(samplePosts));
+if (window.location.pathname.includes("events.html")) {
+  pageType = "events";
+} else if (window.location.pathname.includes("community.html")) {
+  pageType = "community";
+} else if (window.location.pathname.includes("post-detail.html")) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const typeParam = urlParams.get("type");
+  if (typeParam === "events" || typeParam === "community") {
+    pageType = typeParam;
+  }
 }
+
+// Page configurations
+const CONFIGS = {
+  help: {
+    storageKey: "NEIGHBOUR_HELP_KEY",
+    redirectUrl: "/static/pages/help.html",
+    feedName: "Neighbour Help Feed",
+    emptyMsg: "No requests or posts yet",
+    emptySub: "Be the First Neighbour to reach out for Help or Share an Offer!"
+  },
+  events: {
+    storageKey: "EVENTS_KEY",
+    redirectUrl: "/static/pages/events.html",
+    feedName: "Events Feed",
+    emptyMsg: "No events yet",
+    emptySub: "Have an Event Approved by the Residential Committee? Promote it Here!"
+  },
+  community: {
+    storageKey: "COMMUNITY_KEY",
+    redirectUrl: "/static/pages/community.html",
+    feedName: "Community Message Board",
+    emptyMsg: "No discussion posts yet",
+    emptySub: "Be the First Neighbour to Start a Conversation!"
+  }
+};
+
+const activeConfig = CONFIGS[pageType];
+
+// Sample posts 
+const sampleData = {
+  help: [
+    {
+        id: "h1",
+        title: "Need help carrying a heavy couch to the 2nd floor",
+        username: "Sarah_M",
+        content: "Hi neighbors! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
+        date: "Oct 14, 2026",
+        comments: [
+            { username: "Renu", text: "I'm free Saturday morning! Happy to help carry it.", date: "Oct 14, 2026" },
+            { username: "Liam", text: "Count me in too if you need a second pair of hands.", date: "Oct 15, 2026" }
+        ]
+    },
+    {
+        id: "h2",
+        title: "!Need Help Taking care of 2 pet cats next Friday to Tuesday",
+        username: "Alisha",
+        content: "Can anyone help to take care of my two pet cats as I'm going on a vacation next Friday?",
+        date: "Oct 13, 2026",
+        comments: []
+    }
+  ],
+  events: [
+    {
+        id: "e1",
+        title: "Annual Gotong Royong",
+        username: "Official_Residential_Committee",
+        content: "It's that time of year again! Register now to help keep our neighbourhood clean!",
+        date: "Oct 15, 2026",
+        comments: []
+    }
+  ],
+  community: [
+    {
+        id: "c1",
+        title: "Anyone's cat?",
+        username: "Alex_Lee",
+        content: "Saw a cat with orange and white fur this morning. Is anyone missing a cat? It looked like it had a collar.",
+        date: "Oct 10, 2026",
+        comments: [
+            { username: "CatMom_Betty", text: "Yes, that's my Oyen! He ran away this morning but we have since got him back. Thanks for the concern!", date: "Oct 10, 2026" },
+        ]
+    }
+  ]
+};
+
+if (!localStorage.getItem(activeConfig.storageKey)) {
+  localStorage.setItem(activeConfig.storageKey, JSON.stringify(sampleData[pageType]));
+}
+
+// ! OLD CODE FOR POSTERITY, IN CASE OF ERRORS ! :
+// 1. Force-initialize sample posts immediately if localStorage is empty
+// const STORAGE_KEY = "community_posts_v2";
+
+// // Ensure sample posts exist immediately
+// if (!localStorage.getItem(STORAGE_KEY)) {
+//     const samplePosts = [
+//         {
+//             id: 1,
+//             title: "Need help carrying a heavy couch to the 2nd floor",
+//             username: "Sarah_M",
+//             content: "Hi neighbors! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
+//             date: "Oct 14, 2026",
+//             comments: [
+//                 { username: "Renu", text: "I'm free Saturday morning! Happy to help carry it.", date: "Oct 14, 2026" },
+//                 { username: "Liam", text: "Count me in too if you need a second pair of hands.", date: "Oct 15, 2026" }
+//             ]
+//         },
+//         {
+//             id: 2,
+//             title: "!Need Help Taking care of 2 pet cats next Friday to Tuesday",
+//             username: "Alisha",
+//             content: "Can anyone help to take care of my two pet cats as I'm going on a vacation next Friday? Feel free to message me if you need to borrow it for your yard.",
+//             date: "Oct 13, 2026",
+//             comments: [
+//             ]
+//         }
+//     ];
+//     localStorage.setItem(STORAGE_KEY, JSON.stringify(samplePosts));
+// }
 
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Always try to render threads if the feed list exists
@@ -203,7 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const posts = JSON.parse(localStorage.getItem(activeConfig.storageKey)) || [];
             const newPost = {
                 id: Date.now(),
                 title: title,
@@ -214,7 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             posts.unshift(newPost);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+            localStorage.setItem(activeConfig.storageKey, JSON.stringify(posts));
             window.location.href = "/static/pages/help.html";
         });
     }
@@ -230,7 +324,7 @@ function renderThreads() {
     const threadListEl = document.getElementById("threadList");
     if (!threadListEl) return;
 
-    const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const posts = JSON.parse(localStorage.getItem(activeConfig.storageKey)) || [];
 
     if (posts.length === 0) {
         threadListEl.innerHTML = `
@@ -243,7 +337,7 @@ function renderThreads() {
     }
 
     threadListEl.innerHTML = posts.map(post => `
-        <a href="/static/pages/post-detail.html?id=${post.id}" class="thread-card">
+        <a href="/static/pages/post-detail.html?id=${post.id}&type=${pageType}" class="thread-card">
             <h3 class="thread-title">${escapeHTML(post.title)}</h3>
             <div class="thread-meta">
                 <span>👤 @${escapeHTML(post.username)}</span>
@@ -259,13 +353,13 @@ function renderPostDetail() {
     if (!detailContainer) return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const postId = Number(urlParams.get("id"));
-    const posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    const post = posts.find(p => Number(p.id) === postId);
+    const postId = urlParams.get("id");
+    const posts = JSON.parse(localStorage.getItem(activeConfig.storageKey)) || [];
+    const post = posts.find(p => String(p.id) === postId);
 
     if (!post) {
         detailContainer.innerHTML = `
-            <a href="/static/pages/help.html" class="back-link">← Back to Feed</a>
+            <a href="${activeConfig.redirectUrl}" class="back-link">← Back to ${activeConfig.feedName}</a>
             <div class="empty-state">
                 <h3>Post not found</h3>
                 <p>This post may have been removed or does not exist.</p>
@@ -284,7 +378,7 @@ function renderPostDetail() {
         : `<p style="color: #66786e; font-style: italic;">No comments yet. Be the first to Lend a Hand!</p>`;
 
     detailContainer.innerHTML = `
-        <a href="/static/pages/help.html" class="back-link">← Back to Neighbour Help Feed</a>
+        <a href="${activeConfig.redirectUrl}" class="back-link">← Back to ${activeConfig.feedName}</a>
         
         <div class="detail-card" style="margin-bottom: 30px;">
             <h2 class="detail-title">${escapeHTML(post.title)}</h2>
@@ -327,7 +421,7 @@ function renderPostDetail() {
             };
 
             post.comments.push(newComment);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+            localStorage.setItem(activeConfig.storageKey, JSON.stringify(posts));
 
             renderPostDetail();
         });

@@ -84,17 +84,21 @@
                     </select>
                 </div>
 
+                
                 <div class="form-group">
                     <label for="location">Location *</label>
-                    <input
-                        type="text"
-                        id="location"
-                        name="location"
-                        placeholder="e.g. Puchong"
-                        required
-                        maxlength="150"
-                    >
+
+                    <select id="location" name="location" required>
+                        <option value="">Select your residence</option>
+                        <option value="Sunway Residence">SunU Residence</option>
+                        <option value="Waterfront Residence">Waterfront Residence</option>
+                        <option value="Lagoon View">Lagoon View</option>
+                        <option value="Other Sunway/Subang Residence">
+                            Other (Sunway/Subang Area)
+                        </option>
+                    </select>
                 </div>
+
 
                 <div class="form-group">
                     <label for="description">Description</label>

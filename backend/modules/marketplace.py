@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from database.database import get_connection
 import sqlite3
@@ -9,13 +9,24 @@ from fastapi import UploadFile, File
 
 router = APIRouter(prefix="/api", tags=["Marketplace"])
 
+def get_session_member_id(request: Request) -> int:
+    member_id = request.session.get("member_id")
+
+    if not isinstance(member_id, int):
+        raise HTTPException(
+            status_code=401,
+            detail="Please log in to continue."
+        )
+
+    return member_id
+
 
 # =========================
 # Product Model
 # =========================
 
+
 class ProductCreate(BaseModel):
-    member_id: int
     name: str
     price: float
     category: str
@@ -23,6 +34,7 @@ class ProductCreate(BaseModel):
     location: str
     description: str = ""
     image: str = ""
+
 
 class ProductUpdate(BaseModel):
     name: str
@@ -50,8 +62,8 @@ class ProductPatch(BaseModel):
 # =========================
 
 @router.post("/products", status_code=201)
-def create_product(product: ProductCreate):
-
+def create_product(product: ProductCreate, request: Request):
+    member_id = get_session_member_id(request)
     conn = get_connection()
 
     try:
@@ -59,19 +71,13 @@ def create_product(product: ProductCreate):
             """
             INSERT INTO marketplace_product
             (
-                member_id,
-                name,
-                price,
-                category,
-                condition,
-                location,
-                description,
-                image
+                member_id, name, price, category,
+                condition, location, description, image
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                product.member_id,
+                member_id,
                 product.name,
                 product.price,
                 product.category,
@@ -92,11 +98,12 @@ def create_product(product: ProductCreate):
     except sqlite3.IntegrityError:
         raise HTTPException(
             status_code=400,
-            detail="Invalid member ID"
+            detail="Could not create product."
         )
 
     finally:
         conn.close()
+
 
 
 # =========================
@@ -185,40 +192,40 @@ def get_product(product_id: int):
     finally:
         conn.close()
 
-@router.delete("/products/{product_id}")
-def delete_product(product_id: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+# @router.delete("/products/{product_id}")
+# def delete_product(product_id: int):
+#     conn = get_connection()
+#     cursor = conn.cursor()
 
-    try:
-        # Check whether the product exists
-        cursor.execute(
-            "SELECT product_id FROM marketplace_product WHERE product_id = ?",
-            (product_id,)
-        )
-        product = cursor.fetchone()
+#     try:
+#         # Check whether the product exists
+#         cursor.execute(
+#             "SELECT product_id FROM marketplace_product WHERE product_id = ?",
+#             (product_id,)
+#         )
+#         product = cursor.fetchone()
 
-        if product is None:
-            raise HTTPException(
-                status_code=404,
-                detail="Product not found."
-            )
+#         if product is None:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="Product not found."
+#             )
 
-        # Delete the product
-        cursor.execute(
-            "DELETE FROM marketplace_product WHERE product_id = ?",
-            (product_id,)
-        )
+#         # Delete the product
+#         cursor.execute(
+#             "DELETE FROM marketplace_product WHERE product_id = ?",
+#             (product_id,)
+#         )
 
-        conn.commit()
+#         conn.commit()
 
-        return {
-            "message": "Product deleted successfully",
-            "product_id": product_id
-        }
+#         return {
+#             "message": "Product deleted successfully",
+#             "product_id": product_id
+#         }
 
-    finally:
-        conn.close()
+#     finally:
+#         conn.close()
 
 
 # Store uploaded product images in the frontend's static directory
@@ -233,7 +240,11 @@ ALLOWED_IMAGE_TYPES = {
 
 
 @router.post("/upload-image")
-async def upload_product_image(file: UploadFile = File(...)):
+async def upload_product_image(
+    request: Request,
+    file: UploadFile = File(...)
+):
+    get_session_member_id(request)
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=400,
@@ -270,14 +281,20 @@ async def upload_product_image(file: UploadFile = File(...)):
     finally:
         await file.close()
 
+
 @router.put("/products/{product_id}")
-def update_product(product_id: int, product: ProductUpdate):
+def update_product(
+    product_id: int,
+    product: ProductUpdate,
+    request: Request
+):
+    member_id = get_session_member_id(request)
     conn = get_connection()
 
     try:
         existing = conn.execute(
             """
-            SELECT product_id
+            SELECT member_id
             FROM marketplace_product
             WHERE product_id = ?
             """,
@@ -288,6 +305,12 @@ def update_product(product_id: int, product: ProductUpdate):
             raise HTTPException(
                 status_code=404,
                 detail="Product not found"
+            )
+
+        if existing["member_id"] != member_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only edit your own products."
             )
 
         conn.execute(
@@ -326,13 +349,14 @@ def update_product(product_id: int, product: ProductUpdate):
 
 
 @router.delete("/products/{product_id}")
-def delete_product(product_id: int):
+def delete_product(product_id: int, request: Request):
+    member_id = get_session_member_id(request)
     conn = get_connection()
 
     try:
         existing = conn.execute(
             """
-            SELECT product_id
+            SELECT member_id
             FROM marketplace_product
             WHERE product_id = ?
             """,
@@ -343,6 +367,12 @@ def delete_product(product_id: int):
             raise HTTPException(
                 status_code=404,
                 detail="Product not found"
+            )
+
+        if existing["member_id"] != member_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only delete your own products."
             )
 
         conn.execute(
@@ -363,8 +393,14 @@ def delete_product(product_id: int):
     finally:
         conn.close()
 
+
 @router.patch("/products/{product_id}")
-def patch_product(product_id: int, product: ProductPatch):
+def patch_product(
+    product_id: int,
+    product: ProductPatch,
+    request: Request
+):
+    member_id = get_session_member_id(request)
     updates = product.model_dump(exclude_unset=True)
 
     if not updates:
@@ -387,12 +423,34 @@ def patch_product(product_id: int, product: ProductPatch):
             detail="Fields cannot be set to null"
         )
 
+    allowed_fields = {
+        "name",
+        "price",
+        "category",
+        "condition",
+        "location",
+        "description",
+        "image"
+    }
+
+    fields = {
+        key: value
+        for key, value in updates.items()
+        if key in allowed_fields
+    }
+
+    if not fields:
+        raise HTTPException(
+            status_code=400,
+            detail="No valid fields provided to update"
+        )
+
     conn = get_connection()
 
     try:
         existing = conn.execute(
             """
-            SELECT product_id
+            SELECT member_id
             FROM marketplace_product
             WHERE product_id = ?
             """,
@@ -405,21 +463,11 @@ def patch_product(product_id: int, product: ProductPatch):
                 detail="Product not found"
             )
 
-        allowed_fields = {
-            "name",
-            "price",
-            "category",
-            "condition",
-            "location",
-            "description",
-            "image"
-        }
-
-        fields = {
-            key: value
-            for key, value in updates.items()
-            if key in allowed_fields
-        }
+        if existing["member_id"] != member_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only edit your own products."
+            )
 
         assignments = ", ".join(
             f"{field} = ?" for field in fields

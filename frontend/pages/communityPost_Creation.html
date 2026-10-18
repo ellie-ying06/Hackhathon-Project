@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CommunityConnect | Create Post</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <header class="navbar">
+        <a class="logo" href="/">CommunityConnect</a>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/static/pages/community.html">Community</a>
+            <a href="/static/pages/events.html">Events</a>
+            <a href="/static/pages/register.html">Register</a>
+            <a href="/static/pages/market.html">Marketplace</a>
+            <a href="/static/pages/help.html">Neighbour Help</a>
+            <a href="/static/pages/profilepage.html"
+            class="nav-profile" title="My Profile" aria-label="My Profile">
+            <img src="/static/images/user.png" alt="Profile" class="nav-avatar"> </a>
+        </nav>
+    </header>
+
+    <!-- CREATE POST PAGE -->
+    <main class="container">
+        <a href="/static/pages/community.html" class="back-link">← Back to Feed</a>
+        
+        <div class="form-card">
+            <h2 style="margin-top: 0; color: #174d40;">Create Community Forum Post</h2>
+            <form id="postForm">
+
+                <div>
+                    <label for="titleInput">Title</label>
+                    <input type="text" id="titleInput" placeholder="Enter Your Post Title Here" required>
+                </div>
+
+                <div>
+                    <label for="contentInput">Description / Details</label>
+                    <textarea id="contentInput" rows="6" placeholder="Start your discussion here..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn">Publish Post</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>CommunityConnect © 2026 | FiveNova</p>
+    </footer>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

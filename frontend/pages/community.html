@@ -14,41 +14,33 @@
 
       <nav>
         <a href="/">Home</a>
+        <a href="/static/pages/community.html">Community</a>
         <a href="/static/pages/events.html">Events</a>
         <a href="/static/pages/register.html">Register</a>
         <a href="/static/pages/market.html">Marketplace</a>
         <a href="/static/pages/help.html">Neighbour Help</a>
+        <a href="/static/pages/profilepage.html"
+        class="nav-profile" title="My Profile" aria-label="My Profile">
+        <img src="/static/images/user.png" alt="Profile" class="nav-avatar"> </a>
       </nav>
     </header>
 
-    <!-- About Events -->
-    <h1>Community Message Board</h1>
-    <p>Start or join a discussion with your neighbours!</p>
-
-    <!-- Event Navigation/Filtering -->
-    <div class="event-categories">
-      <button
-          class="category-btn active"
-          data-category="">
-          All Events
-      </button>
-      <button
-          class="category-btn active"
-          data-category="">
-          Upcoming Events
-      </button>
-      <button
-          class="category-btn active"
-          data-category="">
-          Past Events
-      </button>
-
-    <!-- Event Posts -->
-    <section class="posts-section">
-        <div id="threadList" class="thread-list">
-            <!-- Threads dynamically inserted here -->
+    <!-- Community Message Board Feed -->
+    <main class="container">
+        <div class="feed-header">
+            <div>
+                <h1>Community Message Board</h1>
+                <p style="color: #66786e; margin: 5px 0 0 0;">Start or join a discussion with your neighbours!</p>
+            </div>
+            <a href="/static/pages/communityPost_Creation.html" class="btn">+ Start a Discussion</a>
         </div>
-    </section>
+
+        <section class="posts-section">
+            <div id="threadList" class="thread-list">
+                <!-- Threads dynamically inserted here -->
+            </div>
+        </section>
+    </main>
 
     <footer>
       <p>CommunityConnect © 2026 | FiveNova</p>

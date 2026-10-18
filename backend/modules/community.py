@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from pwdlib import PasswordHash
 from database.database import get_connection
@@ -26,11 +26,16 @@ class PostCreate(BaseModel):
     title: str
     content: str
     category: str = "General"
+    event_date: str | None = None
 
 class ReplyCreate(BaseModel):
     post_id: int
     member_id: int
     content: str
+
+
+class EventRegistrationCreate(BaseModel):
+    attendee_count: int = Field(ge=1)
 
 
 # Register a new resident
@@ -165,14 +170,15 @@ def create_post(post: PostCreate):
         cursor = conn.execute(
             """
             INSERT INTO post_content
-            (member_id, title, content, category)
-            VALUES (?, ?, ?, ?)
+            (member_id, title, content, category, event_date)
+            VALUES (?, ?, ?, ?, ?)
             """,
             (
                 post.member_id,
                 post.title,
                 post.content,
-                post.category
+                post.category,
+                post.event_date
             )
         )
 
@@ -195,7 +201,11 @@ def create_post(post: PostCreate):
 
 # Get all community posts
 @router.get("/posts")
-def get_posts():
+def get_posts(
+    request: Request,
+    category: str | None = Query(default=None)
+):
+    member_id = request.session.get("member_id")
     conn = get_connection()
 
     try:
@@ -207,18 +217,49 @@ def get_posts():
                 p.title,
                 p.content,
                 p.category,
+                p.event_date,
                 datetime(p.created_at, '+8 hours') AS created_at,
                 r.full_name AS author,
                 (
                     SELECT COUNT(*)
                     FROM post_reply pr
                     WHERE pr.post_id = p.post_id
-                ) AS reply_count
+                ) AS reply_count,
+                (
+                    SELECT COUNT(*)
+                    FROM post_kudos pk
+                    WHERE pk.post_id = p.post_id
+                ) AS kudos_count,
+                EXISTS (
+                    SELECT 1
+                    FROM post_kudos pk
+                    WHERE pk.post_id = p.post_id
+                      AND pk.member_id = ?
+                ) AS has_kudos,
+                (
+                    SELECT COALESCE(SUM(er.attendee_count), 0)
+                    FROM event_registration er
+                    WHERE er.post_id = p.post_id
+                ) AS attendee_count,
+                COALESCE((
+                    SELECT 1
+                    FROM event_registration er
+                    WHERE er.post_id = p.post_id
+                      AND er.member_id = ?
+                ), 0) AS is_registered,
+                COALESCE((
+                    SELECT er.attendee_count
+                    FROM event_registration er
+                    WHERE er.post_id = p.post_id
+                      AND er.member_id = ?
+                ), 0) AS your_attendee_count
             FROM post_content p
             JOIN resident_member r
                 ON p.member_id = r.member_id
+            WHERE (? IS NULL OR p.category = ?)
             ORDER BY p.post_id DESC
-            """
+            """,
+            (member_id, member_id, member_id, category, category)
         ).fetchall()
 
         return [dict(row) for row in rows]
@@ -226,9 +267,168 @@ def get_posts():
     finally:
         conn.close()
 
+def set_event_registration(
+    post_id: int,
+    request: Request,
+    attendee_count: int | None
+):
+    member_id = request.session.get("member_id")
+
+    if not isinstance(member_id, int):
+        raise HTTPException(
+            status_code=401,
+            detail="Please log in to register for an event."
+        )
+
+    conn = get_connection()
+
+    try:
+        post = conn.execute(
+            "SELECT category FROM post_content WHERE post_id = ?",
+            (post_id,)
+        ).fetchone()
+
+        if post is None:
+            raise HTTPException(status_code=404, detail="Error: Post not found.")
+
+        if post["category"] != "Events":
+            raise HTTPException(
+                status_code=400,
+                detail="Registration is only available for events."
+            )
+
+        if attendee_count is not None:
+            conn.execute(
+                """
+                INSERT INTO event_registration
+                    (post_id, member_id, attendee_count)
+                VALUES (?, ?, ?)
+                ON CONFLICT(post_id, member_id)
+                DO UPDATE SET attendee_count = excluded.attendee_count
+                """,
+                (post_id, member_id, attendee_count)
+            )
+        else:
+            conn.execute(
+                """
+                DELETE FROM event_registration
+                WHERE post_id = ? AND member_id = ?
+                """,
+                (post_id, member_id)
+            )
+
+        total_attendees = conn.execute(
+            """
+            SELECT COALESCE(SUM(attendee_count), 0)
+            FROM event_registration
+            WHERE post_id = ?
+            """,
+            (post_id,)
+        ).fetchone()[0]
+        conn.commit()
+
+        return {
+            "attendee_count": total_attendees,
+            "is_registered": attendee_count is not None,
+            "your_attendee_count": attendee_count or 0
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
+
+@router.post("/posts/{post_id}/registration")
+def register_for_event(
+    post_id: int,
+    registration: EventRegistrationCreate,
+    request: Request
+):
+    return set_event_registration(
+        post_id,
+        request,
+        registration.attendee_count
+    )
+
+
+@router.delete("/posts/{post_id}/registration")
+def cancel_event_registration(post_id: int, request: Request):
+    return set_event_registration(post_id, request, None)
+
+
+@router.post("/posts/{post_id}/kudos")
+def toggle_post_kudos(post_id: int, request: Request):
+    member_id = request.session.get("member_id")
+
+    if not isinstance(member_id, int):
+        raise HTTPException(
+            status_code=401,
+            detail="Only logged-in users can give kudos."
+        )
+
+    conn = get_connection()
+
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+
+        post = conn.execute(
+            "SELECT category FROM post_content WHERE post_id = ?",
+            (post_id,)
+        ).fetchone()
+
+        if post is None:
+            raise HTTPException(status_code=404, detail="Error: Post not found.")
+
+        if post["category"] != "Community":
+            raise HTTPException(
+                status_code=400,
+                detail="Kudos are only available on community posts."
+            )
+
+        existing_kudos = conn.execute(
+            """
+            SELECT 1
+            FROM post_kudos
+            WHERE post_id = ? AND member_id = ?
+            """,
+            (post_id, member_id)
+        ).fetchone()
+
+        if existing_kudos:
+            conn.execute(
+                "DELETE FROM post_kudos WHERE post_id = ? AND member_id = ?",
+                (post_id, member_id)
+            )
+            has_kudos = False
+        else:
+            conn.execute(
+                "INSERT INTO post_kudos (post_id, member_id) VALUES (?, ?)",
+                (post_id, member_id)
+            )
+            has_kudos = True
+
+        kudos_count = conn.execute(
+            "SELECT COUNT(*) FROM post_kudos WHERE post_id = ?",
+            (post_id,)
+        ).fetchone()[0]
+
+        conn.commit()
+        return {"kudos_count": kudos_count, "has_kudos": has_kudos}
+
+    except HTTPException:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
 # Get one community post by ID
 @router.get("/posts/{post_id}")
-def get_post(post_id: int):
+def get_post(post_id: int, request: Request):
+    member_id = request.session.get("member_id")
     conn = get_connection()
 
     try:
@@ -240,14 +440,43 @@ def get_post(post_id: int):
                 p.title,
                 p.content,
                 p.category,
+                p.event_date,
                 datetime(p.created_at, '+8 hours') AS created_at,
-                r.full_name AS author
+                r.full_name AS author,
+                (
+                    SELECT COALESCE(SUM(er.attendee_count), 0)
+                    FROM event_registration er
+                    WHERE er.post_id = p.post_id
+                ) AS attendee_count,
+                COALESCE((
+                    SELECT 1
+                    FROM event_registration er
+                    WHERE er.post_id = p.post_id
+                      AND er.member_id = ?
+                ), 0) AS is_registered,
+                COALESCE((
+                    SELECT er.attendee_count
+                    FROM event_registration er
+                    WHERE er.post_id = p.post_id
+                      AND er.member_id = ?
+                ), 0) AS your_attendee_count,
+                (
+                    SELECT COUNT(*)
+                    FROM post_kudos pk
+                    WHERE pk.post_id = p.post_id
+                ) AS kudos_count,
+                EXISTS (
+                    SELECT 1
+                    FROM post_kudos pk
+                    WHERE pk.post_id = p.post_id
+                    AND pk.member_id = ?
+                ) AS has_kudos
             FROM post_content p
             JOIN resident_member r
                 ON p.member_id = r.member_id
             WHERE p.post_id = ?
             """,
-            (post_id,)
+            (member_id, member_id, member_id, post_id)
         ).fetchone()
 
         if row is None:

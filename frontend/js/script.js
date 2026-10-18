@@ -5,7 +5,9 @@
 
 const productGrid = document.getElementById("productGrid");
 const searchInput = document.getElementById("searchInput");
-const categoryButtons = document.querySelectorAll(".category-btn");
+const categoryButtons = document.querySelectorAll(
+    ".marketplace-categories .category-btn"
+);
 
 let products = [];
 let selectedCategory = "All";
@@ -340,7 +342,7 @@ if (window.location.pathname.includes("events.html")) {
   }
 }
 
-// Page configurations
+// Page configurations so each page has its own storage key, feed name etc
 const CONFIGS = {
   help: {
     storageKey: "NEIGHBOUR_HELP_KEY",
@@ -354,7 +356,7 @@ const CONFIGS = {
     redirectUrl: "/static/pages/events.html",
     feedName: "Events Feed",
     emptyMsg: "No events yet",
-    emptySub: "Have an Event Approved by the Residential Committee? Promote it Here!"
+    emptySub: "Have an Event Idea? Suggest it to Your Residential Committee!"
   },
   community: {
     storageKey: "COMMUNITY_KEY",
@@ -366,92 +368,12 @@ const CONFIGS = {
 };
 
 const activeConfig = CONFIGS[pageType];
-
-// Sample posts 
-const sampleData = {
-  help: [
-    {
-        id: "h1",
-        title: "Need help carrying a heavy couch to the 2nd floor",
-        username: "Sarah_M",
-        content: "Hi neighbors! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
-        date: "Oct 14, 2026",
-        comments: [
-            { username: "Renu", text: "I'm free Saturday morning! Happy to help carry it.", date: "Oct 14, 2026" },
-            { username: "Liam", text: "Count me in too if you need a second pair of hands.", date: "Oct 15, 2026" }
-        ]
-    },
-    {
-        id: "h2",
-        title: "!Need Help Taking care of 2 pet cats next Friday to Tuesday",
-        username: "Alisha",
-        content: "Can anyone help to take care of my two pet cats as I'm going on a vacation next Friday?",
-        date: "Oct 13, 2026",
-        comments: []
-    }
-  ],
-  events: [
-    {
-        id: "e1",
-        title: "Annual Gotong Royong",
-        username: "Official_Residential_Committee",
-        content: "It's that time of year again! Register now to help keep our neighbourhood clean!",
-        date: "Oct 15, 2026",
-        comments: []
-    }
-  ],
-  community: [
-    {
-        id: "c1",
-        title: "Anyone's cat?",
-        username: "Alex_Lee",
-        content: "Saw a cat with orange and white fur this morning. Is anyone missing a cat? It looked like it had a collar.",
-        date: "Oct 10, 2026",
-        comments: [
-            { username: "CatMom_Betty", text: "Yes, that's my Oyen! He ran away this morning but we have since got him back. Thanks for the concern!", date: "Oct 10, 2026" },
-        ]
-    }
-  ]
-};
-
-if (!localStorage.getItem(activeConfig.storageKey)) {
-  localStorage.setItem(activeConfig.storageKey, JSON.stringify(sampleData[pageType]));
-}
-
-// ! OLD CODE FOR POSTERITY, IN CASE OF ERRORS ! :
-// 1. Force-initialize sample posts immediately if localStorage is empty
-// const STORAGE_KEY = "community_posts_v2";
-
-// // Ensure sample posts exist immediately
-// if (!localStorage.getItem(STORAGE_KEY)) {
-//     const samplePosts = [
-//         {
-//             id: 1,
-//             title: "Need help carrying a heavy couch to the 2nd floor",
-//             username: "Sarah_M",
-//             content: "Hi neighbors! I just bought a second-hand sofa and need one or two friendly hands to help carry it up to my apartment on Saturday morning. Will provide coffee and snacks!",
-//             date: "Oct 14, 2026",
-//             comments: [
-//                 { username: "Renu", text: "I'm free Saturday morning! Happy to help carry it.", date: "Oct 14, 2026" },
-//                 { username: "Liam", text: "Count me in too if you need a second pair of hands.", date: "Oct 15, 2026" }
-//             ]
-//         },
-//         {
-//             id: 2,
-//             title: "!Need Help Taking care of 2 pet cats next Friday to Tuesday",
-//             username: "Alisha",
-//             content: "Can anyone help to take care of my two pet cats as I'm going on a vacation next Friday? Feel free to message me if you need to borrow it for your yard.",
-//             date: "Oct 13, 2026",
-//             comments: [
-//             ]
-//         }
-//     ];
-//     localStorage.setItem(STORAGE_KEY, JSON.stringify(samplePosts));
-// }
+let selectedEventFilter = "All_Events";
 
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Always try to render threads if the feed list exists
     renderThreads();
+    initialiseEventFilters();
 
     // 2. Handle New Post Submission
     const postForm = document.getElementById("postForm");
@@ -475,20 +397,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const posts = JSON.parse(localStorage.getItem(activeConfig.storageKey)) || [];
-            const newPost = {
-                id: Date.now(),
-                title: title,
-                username: username,
-                content: content,
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                comments: []
-            };
+            // const posts = JSON.parse(localStorage.getItem(activeConfig.storageKey)) || [];
+            // const newPost = {
+            //     id: Date.now(),
+            //     title: title,
+            //     username: username,
+            //     content: content,
+            //     date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            //     comments: []
+            // };
 
-            posts.unshift(newPost);
-            localStorage.setItem(activeConfig.storageKey, JSON.stringify(posts));
-            window.location.href = "/static/pages/help.html";
+            // posts.unshift(newPost);
+            // localStorage.setItem(activeConfig.storageKey, JSON.stringify(posts));
             try {
+                const path = window.location.pathname.toLowerCase();
+                const postType = path.includes("eventpost_creation")
+                    ? "events"
+                    : path.includes("communitypost_creation")
+                        ? "community"
+                        : "help";
+
+                const categoryByType = {
+                    events: "Events",
+                    community: "Community",
+                    help: "Help"
+                };
                 const response = await fetch("/api/posts", {
                     method: "POST",
                     headers: {
@@ -498,7 +431,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         member_id: Number(memberId),
                         title: title,
                         content: content,
-                        category: "General"
+                        category: categoryByType[postType] || "General",
+                        event_date: postType === "events"
+                        ? document.getElementById("eventDateInput").value
+                        : null
                     })
                 });
 
@@ -513,7 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 alert("Your post has been published!");
-                window.location.href = "/static/pages/help.html";
+                window.location.href = CONFIGS[postType].redirectUrl;
 
             } catch (error) {
                 console.error("Create post error:", error);
@@ -530,49 +466,144 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+function initialiseEventFilters() {
+    if (pageType !== "events") return;
+
+    const eventButtons = document.querySelectorAll("[event-category]");
+    eventButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            eventButtons.forEach(eventButton =>
+                eventButton.classList.remove("active")
+            );
+            button.classList.add("active");
+            selectedEventFilter = button.getAttribute("event-category");
+            renderThreads();
+        });
+    });
+}
+
+function sortEventsByDate(posts) {
+    if (pageType !== "events" || selectedEventFilter === "All_Events") {
+        return posts;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return posts.filter(post => {
+        if (!post.event_date) return false;
+
+        const [year, month, day] = post.event_date.split("-").map(Number);
+        const eventDate = new Date(year, month - 1, day);
+
+        if (selectedEventFilter === "Upcoming_Events") {
+            return eventDate >= today;
+        }
+
+        if (selectedEventFilter === "Past_Events") {
+            return eventDate < today;
+        }
+
+        return true;
+    });
+}
+
 
 async function renderThreads() {
     const threadListEl = document.getElementById("threadList");
     if (!threadListEl) return;
 
-    const posts = JSON.parse(localStorage.getItem(activeConfig.storageKey)) || [];
     // Show a loading message while fetching posts
     threadListEl.innerHTML = "<p>Loading posts...</p>";
 
     try {
-        // Get posts from the FastAPI backend
-        const response = await fetch("/api/posts");
+        //Fetch posts from backend based on page type
+        const categoryByPage = {
+            help: "Help",
+            events: "Events",
+            community: "Community"
+        };
+        const category = categoryByPage[pageType];
+        const response = await fetch(
+            `/api/posts?category=${encodeURIComponent(category)}`
+        );
 
         if (!response.ok) {
             throw new Error("Failed to load community posts.");
         }
 
-        const posts = await response.json();
+        const posts = sortEventsByDate(await response.json());
 
         if (posts.length === 0) {
+            const eventEmptyMessages = {
+                Upcoming_Events: "No upcoming events with a scheduled date.",
+                Past_Events: "No past events with a scheduled date."
+            };
             threadListEl.innerHTML = `
                 <div class="empty-state">
-                    <p>Be the First Neighbour to reach out for Help or Share an Offer!</p>
+                    <h3>${escapeHTML(activeConfig.emptyMsg)}</h3>
+                    <p>${escapeHTML(
+                        eventEmptyMessages[selectedEventFilter] ||
+                        activeConfig.emptySub
+                    )}</p>
                 </div>
             `;
             return;
         }
 
-        // Display posts returned by the database
         threadListEl.innerHTML = posts.map(post => `
-            <a href="/static/pages/post-detail.html?id=${post.post_id}"
-               class="thread-card">
-                <h3 class="thread-title">
-                    ${escapeHTML(post.title)}
-                </h3>
-
-                <div class="thread-meta">
-                    <span>👤 @${escapeHTML(post.author || "Anonymous")}</span>
-                    <span>💬 ${post.reply_count} ${post.reply_count === 1 ? "Reply" : "Replies"}</span>
-                    <span>${escapeHTML(post.created_at || "")}</span>
-                </div>
-            </a>
+            <article class="thread-card">
+                <a class="thread-card-link"
+                   href="/static/pages/post-detail.html?id=${post.post_id}&type=${pageType}">
+                    <h3 class="thread-title">${escapeHTML(post.title)}</h3>
+                    <div class="thread-meta">
+                        <span>👤 @${escapeHTML(post.author || "Anonymous")}</span>
+                        <span>💬 ${post.reply_count} ${post.reply_count === 1 ? "Reply" : "Replies"}</span>
+                        <span>${escapeHTML(post.created_at || "")}</span>
+                    </div>
+                </a>
+                ${pageType === "community" && post.category === "Community" ? `
+                    <button
+                        class="kudos-button${post.has_kudos ? " is-active" : ""}"
+                        type="button"
+                        data-post-id="${post.post_id}"
+                        aria-pressed="${post.has_kudos ? "true" : "false"}">
+                        Kudos (${post.kudos_count})
+                    </button>
+                ` : ""}
+            </article>
         `).join("");
+
+        threadListEl.querySelectorAll(".kudos-button").forEach(button => {
+            button.addEventListener("click", async () => {
+                button.disabled = true;
+
+                try {
+                    const response = await fetch(
+                        `/api/posts/${button.dataset.postId}/kudos`,
+                        { method: "POST" }
+                    );
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(
+                            typeof result.detail === "string"
+                                ? result.detail
+                                : "Could not update kudos."
+                        );
+                    }
+
+                    button.classList.toggle("is-active", result.has_kudos);
+                    button.setAttribute("aria-pressed", String(result.has_kudos));
+                    button.textContent = `Kudos (${result.kudos_count})`;
+                } catch (error) {
+                    console.error("Toggle kudos error:", error);
+                    alert(error.message || "Could not update kudos.");
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
 
     } catch (error) {
         console.error("Load posts error:", error);
@@ -583,17 +614,103 @@ async function renderThreads() {
             </div>
         `;
     }
+}
 
-    threadListEl.innerHTML = posts.map(post => `
-        <a href="/static/pages/post-detail.html?id=${post.id}&type=${pageType}" class="thread-card">
-            <h3 class="thread-title">${escapeHTML(post.title)}</h3>
-            <div class="thread-meta">
-                <span>👤 @${escapeHTML(post.username)}</span>
-                <span>💬 ${post.comments ? post.comments.length : 0} Replies</span>
-                <span> ${post.date}</span>
-            </div>
-        </a>
-    `).join("");
+function addCancelRegistrationHandler(button) {
+    button.addEventListener("click", async () => {
+        button.disabled = true;
+
+        try {
+            const response = await fetch(
+                `/api/posts/${button.dataset.postId}/registration`,
+                { method: "DELETE" }
+            );
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    typeof result.detail === "string"
+                        ? result.detail
+                        : "Could not cancel event registration."
+                );
+            }
+
+            const controls = button.closest(".event-rsvp-controls");
+            const registerButton = controls.querySelector(
+                ".event-registration-button"
+            );
+            controls.querySelector(".event-attendee-count").value = 1;
+            button.closest(".event-rsvp-card").querySelector(".event-attendee-total").textContent =
+                `${result.attendee_count} attending`;
+            registerButton.textContent = "Register";
+            registerButton.classList.remove("is-active");
+            button.remove();
+        } catch (error) {
+            console.error("Cancel event registration error:", error);
+            alert(error.message || "Could not cancel event registration.");
+        } finally {
+            button.disabled = false;
+        }
+    });
+}
+
+function addEventRegistrationHandler(button) {
+    button.addEventListener("click", async () => {
+        button.disabled = true;
+        const controls = button.closest(".event-rsvp-controls");
+        const attendeeInput = controls.querySelector(".event-attendee-count");
+        const attendeeCount = attendeeInput.valueAsNumber;
+
+        if (!Number.isInteger(attendeeCount) || attendeeCount < 1) {
+            alert("Enter a whole number of attendees (at least 1).");
+            button.disabled = false;
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `/api/posts/${button.dataset.postId}/registration`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ attendee_count: attendeeCount })
+                }
+            );
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    typeof result.detail === "string"
+                        ? result.detail
+                        : "Could not update event registration."
+                );
+            }
+
+            attendeeInput.value = result.your_attendee_count;
+            button.closest(".event-rsvp-card").querySelector(".event-attendee-total").textContent =
+                `${result.attendee_count} attending`;
+            button.textContent = "Update RSVP";
+            button.classList.add("is-active");
+
+            if (!controls.querySelector(".event-cancel-registration-button")) {
+                const cancelButton = document.createElement("button");
+                cancelButton.className = "event-cancel-registration-button";
+                cancelButton.type = "button";
+                cancelButton.dataset.postId = button.dataset.postId;
+                cancelButton.textContent = "Cancel RSVP";
+                controls.insertBefore(
+                    cancelButton,
+                    controls.querySelector(".event-attendee-total")
+                );
+                addCancelRegistrationHandler(cancelButton);
+            }
+        } catch (error) {
+            console.error("Event registration error:", error);
+            alert(error.message || "Could not update event registration.");
+        } finally {
+            button.disabled = false;
+        }
+    });
 }
 
 async function renderPostDetail() {
@@ -602,30 +719,19 @@ async function renderPostDetail() {
 
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
-    const posts = JSON.parse(localStorage.getItem(activeConfig.storageKey)) || [];
-    const post = posts.find(p => String(p.id) === postId);
 
     if (!postId) {
         detailContainer.innerHTML = `
             <a href="${activeConfig.redirectUrl}" class="back-link">← Back to ${activeConfig.feedName}</a>
             <div class="empty-state">
                 <h3>Invalid post</h3>
-                <p>Please select a post from the Help feed.</p>
+                <p>Please select a post from the feed.</p>
             </div>
         `;
         return;
     }
 
     detailContainer.innerHTML = "<p>Loading post...</p>";
-
-    // detailContainer.innerHTML = `
-    //     <a href="${activeConfig.redirectUrl}" class="back-link">← Back to ${activeConfig.feedName}</a>
-        
-    //     <div class="detail-card" style="margin-bottom: 30px;">
-    //         <h2 class="detail-title">${escapeHTML(post.title)}</h2>
-    //         <div class="detail-meta">Posted by <strong>@${escapeHTML(post.username)}</strong> on ${post.date}</div>
-    //         <div class="detail-body" style="margin-top: 15px; line-height: 1.6;">${escapeHTML(post.content)}</div>
-    //     </div>
     
     try {
         // Load the post
@@ -666,14 +772,30 @@ async function renderPostDetail() {
                 </div>
             `).join("")
             : `<p style="color: #66786e; font-style: italic;">
-                No replies yet. Be the first to Lend a Hand!
+                ${escapeHTML({
+                    help: "No replies yet. Be the first neighbour to lend a hand!",
+                    events: "No replies yet. Be the first to discuss this event!",
+                    community: "No replies yet. Be the first to start the conversation!"
+                }[pageType])}
                </p>`;
 
-        detailContainer.innerHTML = `
-            <a href="/static/pages/help.html" class="back-link">
-                ← Back to Neighbour Help Feed
-            </a>
+        if (pageType === "events" && post.category === "Events") {
+            detailContainer.innerHTML = `
+            <a href="/static/pages/events.html" class="back-link">
+                ← Back to Event Feed
+            </a> `
+        } else if (pageType === "community" && post.category === "Community") {
+            detailContainer.innerHTML = `
+            <a href="/static/pages/community.html" class="back-link">
+                ← Back to Community Discussion Posts
+            </a> `
+        } else
+            detailContainer.innerHTML = `
+                <a href="/static/pages/help.html" class="back-link">
+                    ← Back to Neighbour Help Feed
+                </a> `
 
+        detailContainer.innerHTML += `
             <div class="detail-card" style="margin-bottom: 30px;">
                 <h2 class="detail-title">${escapeHTML(post.title)}</h2>
                 <div class="detail-meta">
@@ -682,6 +804,50 @@ async function renderPostDetail() {
                 </div>
                 <div class="detail-body" style="margin-top: 15px; line-height: 1.6; white-space: pre-wrap;">${escapeHTML(post.content)}</div>
             </div>
+
+            ${pageType === "community" && post.category === "Community" ? `
+                <button
+                    class="kudos-button${post.has_kudos ? " is-active" : ""}"
+                    type="button"
+                    id="detailKudosButton"
+                    data-post-id="${post.post_id}"
+                    aria-pressed="${post.has_kudos ? "true" : "false"}">
+                    Kudos (${post.kudos_count})
+                </button>
+            ` : ""}
+
+            ${post.category === "Events" ? `
+                <section class="event-rsvp-card">
+                    <h3>Register for this event</h3>
+                    <p class="event-attendee-total">${post.attendee_count} attending</p>
+                    <div class="event-rsvp-controls">
+                        <label>
+                            How many people are attending (including you)?
+                            <input
+                                class="event-attendee-count"
+                                type="number"
+                                min="1"
+                                step="1"
+                                value="${post.is_registered ? post.your_attendee_count : 1}"
+                                aria-label="Number of people attending">
+                        </label>
+                        <button
+                            class="event-registration-button${post.is_registered ? " is-active" : ""}"
+                            type="button"
+                            data-post-id="${post.post_id}">
+                            ${post.is_registered ? "Update RSVP" : "Register"}
+                        </button>
+                        ${post.is_registered ? `
+                            <button
+                                class="event-cancel-registration-button"
+                                type="button"
+                                data-post-id="${post.post_id}">
+                                Cancel RSVP
+                            </button>
+                        ` : ""}
+                    </div>
+                </section>
+            ` : ""}
 
             <div class="comments-section">
                 <h3 style="color: #174d40; margin-bottom: 15px;">
@@ -709,6 +875,54 @@ async function renderPostDetail() {
                 </div>
             </div>
         `;
+
+        detailContainer.querySelectorAll(".event-registration-button").forEach(
+            addEventRegistrationHandler
+        );
+        detailContainer.querySelectorAll(
+            ".event-cancel-registration-button"
+        ).forEach(addCancelRegistrationHandler);
+
+        const detailKudosButton =
+            document.getElementById("detailKudosButton");
+
+        if (detailKudosButton) {
+            detailKudosButton.addEventListener("click", async () => {
+                detailKudosButton.disabled = true;
+
+                try {
+                    const response = await fetch(
+                        `/api/posts/${detailKudosButton.dataset.postId}/kudos`,
+                        { method: "POST" }
+                    );
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(
+                            typeof result.detail === "string"
+                                ? result.detail
+                                : "Could not update kudos."
+                        );
+                    }
+
+                    detailKudosButton.classList.toggle(
+                        "is-active",
+                        result.has_kudos
+                    );
+                    detailKudosButton.setAttribute(
+                        "aria-pressed",
+                        String(result.has_kudos)
+                    );
+                    detailKudosButton.textContent =
+                        `Kudos (${result.kudos_count})`;
+                } catch (error) {
+                    console.error("Toggle detail kudos error:", error);
+                    alert(error.message || "Could not update kudos.");
+                } finally {
+                    detailKudosButton.disabled = false;
+                }
+            });
+        }
 
         // Submit a reply to the backend
         const commentForm = document.getElementById("commentForm");

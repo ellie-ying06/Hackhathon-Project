@@ -23,9 +23,9 @@
       <a href="/help">Neighbour Help</a>
        <a href="/static/pages/profilepage.html"
         class="profile-pic" title="My Profile" aria-label="My Profile">
-      <img src="/static/images/user.png" alt="Profile" class="nav-avatar"> </a>
-</a>
+      <img src="/static/images/user.png" alt="Profile" class="nav-avatar"></a>
     </nav>
+
   </header>
 
   <main class="profile-container">
@@ -68,7 +68,7 @@
 
         <div class="stat-card">
           <div class="stat-icon">🛍️</div>
-          <h3>2</h3>
+          <h3 id="marketplaceCount">0</h3>
           <p>Marketplace Listings</p>
         </div>
 
@@ -116,35 +116,19 @@
 
     <!-- My Marketplace -->
     <section class="section">
-      <div class="section-heading">
+
+    <div class="section-heading">
         <h2>My Marketplace</h2>
+
         <a href="/market" class="view-link">
-          View Marketplace →
+            View Marketplace →
         </a>
-      </div>
+    </div>
 
-      <div class="content-card">
-        <div class="list-item">
-          <div class="item-icon">📚</div>
+    <div class="content-card" id="myMarketplace">
+        <p class="empty-state">Loading listings...</p>
+    </div>
 
-          <div class="content-card" id="myMarketplace">
-            <p class="empty-state">Loading listings...</p>
-            </div>
-
-          <span class="status active-status">Active</span>
-        </div>
-
-        <div class="list-item">
-          <div class="item-icon">🪴</div>
-
-          <div class="item-details">
-            <h3>Small Indoor Plant</h3>
-            <p>RM 15.00 · Listed for sale</p>
-          </div>
-
-          <span class="status sold">Sold</span>
-        </div>
-      </div>
     </section>
 
     <!-- Account Settings -->
@@ -165,15 +149,15 @@
             <h3>Log Out</h3>
             <p>Sign out of your account securely.</p>
           </div>
-          <button class="btn-outline logout-btn" disabled>
-            Log Out
+          <button
+              type="button"
+              id="logoutBtn"
+              class="btn-outline logout-btn">
+              Log Out
           </button>
         </div>
       </div>
 
-      <p class="demo-note">
-        Demo profile — account actions will be connected later.
-      </p>
     </section>
 
   </main>
@@ -182,6 +166,8 @@
   <footer>
     <p>CommunityConnect © 2026 | FiveNova</p>
   </footer>
+
+  <script src="/static/js/profile.js"></script>
 
 </body>
 </html>

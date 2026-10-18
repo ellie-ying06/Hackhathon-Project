@@ -136,7 +136,7 @@ def get_current_member(request: Request):
     try:
         member = conn.execute(
             """
-            SELECT member_id, full_name, email
+            SELECT member_id, full_name, email, address
             FROM resident_member
             WHERE member_id = ?
             """,

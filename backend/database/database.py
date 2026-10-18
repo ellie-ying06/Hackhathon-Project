@@ -94,6 +94,31 @@ def init_db():
                     REFERENCES resident_member(member_id)
                     ON DELETE CASCADE
             );
+       
+            CREATE TABLE IF NOT EXISTS community_event (
+                event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT,
+                event_date TEXT NOT NULL,
+                location TEXT NOT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS event_registration (
+                registration_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_id INTEGER NOT NULL,
+                member_id INTEGER NOT NULL,
+                registered_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+            FOREIGN KEY (event_id)
+                REFERENCES community_event(event_id),
+
+            FOREIGN KEY (member_id)
+                REFERENCES resident_member(member_id),
+
+            UNIQUE(event_id, member_id)
+            );
+
         """)
         # Add password_hash to existing databases if it is missing
         columns = conn.execute(

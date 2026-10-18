@@ -1,6 +1,22 @@
 
 const productDetail = document.getElementById("productDetail");
 
+
+async function getLoggedInMember() {
+    const response = await fetch("/api/me");
+
+    if (response.status === 401) {
+        return null;
+    }
+
+    if (!response.ok) {
+        throw new Error("Unable to check login status.");
+    }
+
+    return await response.json();
+}
+
+
 function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -33,6 +49,12 @@ async function loadProductDetails() {
 
         const product = await response.json();
 
+        const currentMember = await getLoggedInMember();
+
+        const isOwner =
+            currentMember !== null &&
+            Number(currentMember.member_id) === Number(product.member_id);
+
         productDetail.innerHTML = `
             <div class="product-detail-card">
                 <img
@@ -63,22 +85,29 @@ async function loadProductDetails() {
                         ${escapeHTML(product.location)}
                     </p>
 
-                    <div class="product-actions">
-                    <a
-                        href="/edit-product?id=${encodeURIComponent(product.product_id)}"
-                        class="sell-item-btn"
-                    >
-                        Edit Product
-                    </a>
+                    
+                ${isOwner
+                    ? `
+                        <div class="product-actions">
+                            <a
+                                href="/edit-product?id=${encodeURIComponent(product.product_id)}"
+                                class="sell-item-btn"
+                            >
+                                Edit Product
+                            </a>
 
-                    <button
-                        type="button"
-                        id="deleteProductBtn"
-                        class="delete-product-btn"
-                    >
-                        Delete Product
-                    </button>
-                </div>
+                            <button
+                                type="button"
+                                id="deleteProductBtn"
+                                class="delete-product-btn"
+                            >
+                                Delete Product
+                            </button>
+                        </div>
+                    `
+                    : ""
+                }
+
 
                     <h2>Description</h2>
 
@@ -157,7 +186,7 @@ async function loadProductDetails() {
 
                 try {
                     const response = await fetch(
-                        `/api/products/${encodeURIComponent(product.product_id)}`,
+                        `/api/products/${encodeURIComponent(product.product_id)}?member_id=${memberId}`,
                         {
                             method: "DELETE"
                         }
@@ -176,13 +205,6 @@ async function loadProductDetails() {
                             "The server returned a non-JSON response. Check the backend terminal for errors."
                         );
                     }
-
-                    if (!response.ok) {
-                        throw new Error(
-                            result.detail || "Unable to delete product."
-                        );
-                    }
-
 
                     if (!response.ok) {
                         throw new Error(
@@ -275,8 +297,17 @@ if (document.getElementById("editProductForm")) {
                         : "Unable to load the product."
                 );
             }
-
+            
             const product = await response.json();
+
+            const memberId = Number(sessionStorage.getItem("member_id"));
+
+            if (!memberId || memberId !== Number(product.member_id)) {
+                editLoading.textContent =
+                    "You are not allowed to edit this product.";
+                editForm.hidden = true;
+                return;
+            }
 
             editableFields.forEach(field => {
                 const input = document.getElementById(field);
@@ -361,9 +392,11 @@ if (document.getElementById("editProductForm")) {
             }
         });
 
-        saveButton.disabled = true;
 
         try {
+            // Disable the button while processing the update
+            saveButton.disabled = true;
+
             // Upload a replacement image only when one is selected
             const imageFile = imageInput.files[0];
 
@@ -394,10 +427,19 @@ if (document.getElementById("editProductForm")) {
                 return;
             }
 
-            saveButton.textContent = "Saving changes...";
+    saveButton.textContent = "Saving changes...";
+
+    // Continue with your existing PATCH request code here
+
+            
+            const memberId = Number(sessionStorage.getItem("member_id"));
+
+            if (!memberId) {
+                throw new Error("Please register before editing a product.");
+            }
 
             const response = await fetch(
-                `/api/products/${productId}`,
+                `/api/products/${productId}?member_id=${memberId}`,
                 {
                     method: "PATCH",
                     headers: {
@@ -407,12 +449,21 @@ if (document.getElementById("editProductForm")) {
                 }
             );
 
+
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(
-                    result.detail || "Unable to update product."
-                );
+                console.error("Update failed:", result);
+
+                const errorMessage = Array.isArray(result.detail)
+                    ? result.detail
+                        .map(error => `${error.loc?.join(".")}: ${error.msg}`)
+                        .join("\n")
+                    : typeof result.detail === "string"
+                        ? result.detail
+                        : JSON.stringify(result.detail ?? result);
+
+                throw new Error(errorMessage || "Unable to update product.");
             }
 
             // Update the saved baseline

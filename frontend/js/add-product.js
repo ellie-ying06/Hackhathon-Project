@@ -3,6 +3,7 @@ const addProductForm = document.getElementById("addProductForm");
 const formMessage = document.getElementById("formMessage");
 const submitProductBtn = document.getElementById("submitProductBtn");
 
+
 const imageInput = document.getElementById("image");
 const imagePreviewContainer = document.getElementById("imagePreviewContainer");
 const imagePreview = document.getElementById("imagePreview");
@@ -56,6 +57,13 @@ imageInput.addEventListener("change", () => {
 
 addProductForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const sessionResponse = await fetch("/api/me");
+
+    if (!sessionResponse.ok) {
+        alert("Please log in before selling an item.");
+        window.location.href = "/static/pages/login.html";
+        return;
+    }
 
     formMessage.textContent = "";
     formMessage.className = "";
@@ -64,7 +72,6 @@ addProductForm.addEventListener("submit", async (event) => {
     const imageFile = imageInput.files[0];
 
     const productData = {
-        member_id: Number(formData.get("member_id")),
         name: formData.get("name").trim(),
         price: Number(formData.get("price")),
         category: formData.get("category"),
@@ -77,8 +84,6 @@ addProductForm.addEventListener("submit", async (event) => {
     if (
         !productData.name ||
         !productData.location ||
-        !Number.isInteger(productData.member_id) ||
-        productData.member_id < 1 ||
         !Number.isFinite(productData.price) ||
         productData.price < 0
     ) {

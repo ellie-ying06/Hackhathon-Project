@@ -1,3 +1,6 @@
+
+import os
+from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -8,8 +11,23 @@ from database.database import init_db
 from modules.community import router as community_router
 from modules.marketplace import router as marketplace_router
 
-app = FastAPI(title="NeighbourHub API")
 
+app = FastAPI(title="NeighbourHub API")
+SESSION_SECRET = os.environ.get("SESSION_SECRET")
+
+if not SESSION_SECRET:
+    raise RuntimeError(
+        "SESSION_SECRET is not set. Set it before starting the server."
+    )
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SESSION_SECRET,
+    session_cookie="neighbourhub_session",
+    max_age=60 * 60 * 8,  # 8 hours
+    same_site="lax",
+    https_only=False,  # Local HTTP development only
+)
 # Initialize the database
 init_db()
 
@@ -67,3 +85,7 @@ def help_detail_page():
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/login")
+def login_page():
+    return FileResponse(FRONTEND_DIR / "login.html")

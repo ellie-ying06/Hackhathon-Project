@@ -20,21 +20,21 @@ def seed_database():
         # ==================================================
 
         residents = [
-            ("Alex Tan", "alex.demo@example.com", "0123456789", "Puchong"),
-            ("Sarah Lim", "sarah.demo@example.com", "0123456788", "Subang Jaya"),
-            ("Jason Lee", "jason.demo@example.com", "0123456787", "Puchong"),
-            ("Mei Ling", "meiling.demo@example.com", "0123456786", "Sunway"),
-            ("Daniel Wong", "daniel.demo@example.com", "0123456785", "Puchong"),
-            ("Aisha Rahman", "aisha.demo@example.com", "0123456784", "Subang Jaya"),
-            ("Ryan Tan", "ryan.demo@example.com", "0123456783", "Sunway"),
-            ("Priya Kumar", "priya.demo@example.com", "0123456782", "Puchong"),
-            ("Ethan Chong", "ethan.demo@example.com", "0123456781", "Subang Jaya"),
-            ("Nurul Huda", "nurul.demo@example.com", "0123456790", "Sunway"),
-            ("Chloe Ng", "chloe.demo@example.com", "0123456791", "Puchong"),
-            ("Adam Lim", "adam.demo@example.com", "0123456792", "Subang Jaya"),
-            ("Sofia Ahmad", "sofia.demo@example.com", "0123456793", "Sunway"),
-            ("Lucas Goh", "lucas.demo@example.com", "0123456794", "Puchong"),
-            ("Emma Teoh", "emma.demo@example.com", "0123456795", "Subang Jaya"),
+            ("Alex Tan", "alex.demo@example.com", "0123456789", "Sunway Residence"),
+            ("Sarah Lim", "sarah.demo@example.com", "0123456788", "Waterfront Residence"),
+            ("Jason Lee", "jason.demo@example.com", "0123456787", "Sunway Residence"),
+            ("Mei Ling", "meiling.demo@example.com", "0123456786", "Waterfront Residence"),
+            ("Daniel Wong", "daniel.demo@example.com", "0123456785", "Sunway Residence"),
+            ("Aisha Rahman", "aisha.demo@example.com", "0123456784", "Lagoon View"),
+            ("Ryan Tan", "ryan.demo@example.com", "0123456783", "Sunway Residence"),
+            ("Priya Kumar", "priya.demo@example.com", "0123456782", "Other Sunway/Subang Residence"),
+            ("Ethan Chong", "ethan.demo@example.com", "0123456781", "Other Sunway/Subang Residence"),
+            ("Nurul Huda", "nurul.demo@example.com", "0123456790", "Waterfront Residence"),
+            ("Chloe Ng", "chloe.demo@example.com", "0123456791", "Lagoon View"),
+            ("Adam Lim", "adam.demo@example.com", "0123456792", "Other Sunway/Subang Residence"),
+            ("Sofia Ahmad", "sofia.demo@example.com", "0123456793", "Waterfront Residence"),
+            ("Lucas Goh", "lucas.demo@example.com", "0123456794", "Lagoon View"),
+            ("Emma Teoh", "emma.demo@example.com", "0123456795", "Lagoon View"),
         ]
 
         member_ids = {}
@@ -51,6 +51,15 @@ def seed_database():
 
             if existing:
                 member_id = existing["member_id"]
+
+                conn.execute(
+                    """
+                    UPDATE resident_member
+                    SET full_name = ?, phone = ?, address = ?
+                    WHERE member_id = ?
+                    """,
+                    (name, phone, address, member_id),
+                )
             else:
                 hashed_password = password_hash.hash(DEMO_PASSWORD)
 
@@ -334,16 +343,16 @@ def seed_database():
 
         
         products = [
-            (member_ids["alex.demo@example.com"], "Board Game", 20.00, "Games", "Good", "Puchong", "A fun board game for family nights.", "/static/images/product_image/boardGame.jpg"),
-            (member_ids["sarah.demo@example.com"], "Desk Lamp", 15.00, "Home", "Good", "Subang Jaya", "A working desk lamp looking for a new owner.", "/static/images/product_image/deskLamp.jpg"),
-            (member_ids["jason.demo@example.com"], "Indoor Plant", 12.00, "Plants", "Good", "Puchong", "A lovely indoor plant for your home.", "/static/images/product_image/indoorPlant.avif"),
-            (member_ids["meiling.demo@example.com"], "Keyboard", 25.00, "Electronics", "Good", "Sunway", "A keyboard in good working condition.", "/static/images/product_image/keyboard.jpg"),
-            (member_ids["daniel.demo@example.com"], "Potted Herbs", 10.00, "Plants", "Good", "Puchong", "Fresh herbs growing in a pot.", "/static/images/product_image/pottedHerbs.jpg"),
-            (member_ids["aisha.demo@example.com"], "Storage Boxes", 8.00, "Home", "Good", "Subang Jaya", "Storage boxes for organising your home.", "/static/images/product_image/storageBoxes.jpg"),
-            (member_ids["ryan.demo@example.com"], "Storybook", 5.00, "Books", "Good", "Puchong", "A second-hand storybook ready for a new reader.", "/static/images/product_image/storybook.jpg"),
-            (member_ids["priya.demo@example.com"], "Study Chair", 35.00, "Furniture", "Good", "Sunway", "A chair suitable for studying at home.", "/static/images/product_image/studyChair.jpg"),
-            (member_ids["ethan.demo@example.com"], "Used Bags", 18.00, "Accessories", "Good", "Puchong", "Pre-loved bags looking for a new owner.", "/static/images/product_image/usedbags.jpg"),
-            (member_ids["nurul.demo@example.com"], "Water Bottle", 6.00, "Accessories", "Good", "Subang Jaya", "A reusable water bottle.", "/static/images/product_image/waterBottle.jpg"),
+            (member_ids["alex.demo@example.com"], "Board Game", 20.00, "Games", "Good", "Sunway Residence", "A fun board game for family nights.", "/static/images/product_image/boardGame.jpg"),
+            (member_ids["sarah.demo@example.com"], "Desk Lamp", 15.00, "Home", "Good", "Sunway Residence", "A working desk lamp looking for a new owner.", "/static/images/product_image/deskLamp.jpg"),
+            (member_ids["jason.demo@example.com"], "Indoor Plant", 12.00, "Plants", "Good", "Lagoon View", "A lovely indoor plant for your home.", "/static/images/product_image/indoorPlant.avif"),
+            (member_ids["meiling.demo@example.com"], "Keyboard", 25.00, "Electronics", "Good", "Lagoon View", "A keyboard in good working condition.", "/static/images/product_image/keyboard.jpg"),
+            (member_ids["daniel.demo@example.com"], "Potted Herbs", 10.00, "Plants", "Good", "Other Sunway/Subang Residence", "Fresh herbs growing in a pot.", "/static/images/product_image/pottedHerbs.jpg"),
+            (member_ids["aisha.demo@example.com"], "Storage Boxes", 8.00, "Home", "Good", "Sunway Residence", "Storage boxes for organising your home.", "/static/images/product_image/storageBoxes.jpg"),
+            (member_ids["ryan.demo@example.com"], "Storybook", 5.00, "Books", "Good", "Lagoon View", "A second-hand storybook ready for a new reader.", "/static/images/product_image/storybook.jpg"),
+            (member_ids["priya.demo@example.com"], "Study Chair", 35.00, "Furniture", "Good", "Waterfront Residence", "A chair suitable for studying at home.", "/static/images/product_image/studyChair.jpg"),
+            (member_ids["ethan.demo@example.com"], "Used Bags", 18.00, "Accessories", "Good", "Waterfront Residence", "Pre-loved bags looking for a new owner.", "/static/images/product_image/usedbags.jpg"),
+            (member_ids["nurul.demo@example.com"], "Water Bottle", 6.00, "Accessories", "Good", "Other Sunway/Subang Residence", "A reusable water bottle.", "/static/images/product_image/waterBottle.jpg"),
         ]
 
         
@@ -362,10 +371,10 @@ def seed_database():
                 conn.execute(
                     """
                     UPDATE marketplace_product
-                    SET image = ?
+                    SET location = ?, image = ?
                     WHERE member_id = ? AND name = ?
                     """,
-                    (image, member_id, name),
+                    (location, image, member_id, name),
                 )
             else:
                 conn.execute(
@@ -486,10 +495,16 @@ def seed_database():
                 """
                 SELECT COUNT(*) FROM marketplace_product
                 WHERE name IN (
-                    'Used storybooks', 'Desk lamp', 'Indoor plant',
-                    'Study chair', 'Water bottle', 'Storage boxes',
-                    'Board game', 'Potted herbs', 'Keyboard',
-                    'Reusable shopping bags'
+                    'Board Game',
+                    'Desk Lamp',
+                    'Indoor Plant',
+                    'Keyboard',
+                    'Potted Herbs',
+                    'Storage Boxes',
+                    'Storybook',
+                    'Study Chair',
+                    'Used Bags',
+                    'Water Bottle'
                 )
                 """
             ).fetchone()[0],

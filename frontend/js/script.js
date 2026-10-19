@@ -382,15 +382,8 @@ document.addEventListener("DOMContentLoaded", () => {
         postForm.addEventListener("submit", async (e) => {
             e.preventDefault();
 
-            const memberId = sessionStorage.getItem("member_id");
             const title = document.getElementById("titleInput").value.trim();
             const content = document.getElementById("contentInput").value.trim();
-
-            if (!memberId) {
-                alert("Please register first before creating a post.");
-                window.location.href = "/static/pages/register.html";
-                return;
-            }
 
             if (!title || !content) {
                 alert("Please fill in all required fields.");
@@ -428,7 +421,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        member_id: Number(memberId),
                         title: title,
                         content: content,
                         category: categoryByType[postType] || "General",
@@ -930,18 +922,11 @@ async function renderPostDetail() {
         commentForm.addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            const memberId = sessionStorage.getItem("member_id");
             const commentText = document.getElementById("commentText");
             const content = commentText.value.trim();
             const submitButton = commentForm.querySelector(
                 'button[type="submit"]'
             );
-
-            if (!memberId) {
-                alert("Please register first before replying.");
-                window.location.href = "/static/pages/register.html";
-                return;
-            }
 
             if (!content) {
                 alert("Please enter a reply.");
@@ -958,7 +943,6 @@ async function renderPostDetail() {
                     },
                     body: JSON.stringify({
                         post_id: postId,
-                        member_id: Number(memberId),
                         content: content
                     })
                 });

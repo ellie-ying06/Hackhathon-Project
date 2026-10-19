@@ -29,7 +29,6 @@ class PostCreate(BaseModel):
 
 class ReplyCreate(BaseModel):
     post_id: int
-    member_id: int
     content: str
 
 
@@ -549,7 +548,15 @@ def delete_post(post_id: int):
 
 
 @router.post("/replies", status_code=201)
-def create_reply(reply: ReplyCreate):
+def create_reply(reply: ReplyCreate, request: Request):
+    member_id = request.session.get("member_id")
+
+    if not isinstance(member_id, int):
+        raise HTTPException(
+            status_code=401,
+            detail="Please log in before replying."
+        )
+
     content = reply.content.strip()
 
     if not content:
@@ -573,16 +580,16 @@ def create_reply(reply: ReplyCreate):
                 detail="Post not found"
             )
 
-        # Check that the resident exists
         member = conn.execute(
             "SELECT member_id FROM resident_member WHERE member_id = ?",
-            (reply.member_id,)
+            (member_id,)
         ).fetchone()
 
         if member is None:
+            request.session.clear()
             raise HTTPException(
-                status_code=404,
-                detail="Resident not found"
+                status_code=401,
+                detail="Session is no longer valid."
             )
 
         cursor = conn.execute(
@@ -590,7 +597,7 @@ def create_reply(reply: ReplyCreate):
             INSERT INTO post_reply (post_id, member_id, content)
             VALUES (?, ?, ?)
             """,
-            (reply.post_id, reply.member_id, content)
+            (reply.post_id, member_id, content)
         )
 
         conn.commit()

@@ -22,7 +22,6 @@ class LoginRequest(BaseModel):
 
 # Post Content model
 class PostCreate(BaseModel):
-    member_id: int
     title: str
     content: str
     category: str = "General"
@@ -163,22 +162,56 @@ def logout_member(request: Request):
 
 # Create a new community post
 @router.post("/posts", status_code=201)
-def create_post(post: PostCreate):
+def create_post(post: PostCreate, request: Request):
+    member_id = request.session.get("member_id")
+
+    if not isinstance(member_id, int):
+        raise HTTPException(
+            status_code=401,
+            detail="Please log in before creating a post."
+        )
+
+    title = post.title.strip()
+    content = post.content.strip()
+
+    if not title or not content:
+        raise HTTPException(
+            status_code=422,
+            detail="Title and content cannot be empty."
+        )
+
+    if post.category == "Events":
+        if not post.event_date:
+            raise HTTPException(
+                status_code=422,
+                detail="An event date is required."
+            )
+
+        from datetime import date
+
+        try:
+            date.fromisoformat(post.event_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail="Please provide a valid event date."
+            )
+
     conn = get_connection()
 
     try:
         cursor = conn.execute(
             """
             INSERT INTO post_content
-            (member_id, title, content, category, event_date)
+                (member_id, title, content, category, event_date)
             VALUES (?, ?, ?, ?, ?)
             """,
             (
-                post.member_id,
-                post.title,
-                post.content,
+                member_id,
+                title,
+                content,
                 post.category,
-                post.event_date
+                post.event_date if post.category == "Events" else None
             )
         )
 
@@ -188,12 +221,6 @@ def create_post(post: PostCreate):
             "message": "Post created successfully",
             "post_id": cursor.lastrowid
         }
-
-    except sqlite3.IntegrityError:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid member ID"
-        )
 
     finally:
         conn.close()
